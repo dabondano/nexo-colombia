@@ -39,3 +39,13 @@
 - Assumption: when the Cámara bills dataset publishes a Senate number with the text "No Aplica" inserted before, after and between every character, removing that text gives the number the source intended (for example "068/2012 S").
 - Reason: the pattern is exact in all 194 affected rows and every result has the form of a bill number; one case (Cámara 343/2013 C) was compared with the bill's page at camara.gov.co on 2026-11-17 and matched · Impact if wrong: a Senate number shown for some of those bills would be incorrect; the published value is kept in the raw record and the record page states that the number was reconstructed.
 - Owner/verification: data steward; sample more rows against camara.gov.co, and report the defect to the Cámara.
+
+### Assumption A-009
+- Assumption: the Constitution's titles and first chapters that Función Pública's page prints without their label ("TÍTULO II", "CAPÍTULO 1") can be numbered by their order on the page.
+- Reason: the page prints every title name in order and the reader stops if a printed label ("TÍTULO XII") does not match the deduced count, or if the page does not end with thirteen titles; the outline was compared with the Senate's 2005 edition, which differs only in the two omissions listed for source S-024 · Impact if wrong: a division would carry the wrong number; each deduced number is declared on its record.
+- Owner/verification: legal reviewer, while reviewing the explorer.
+
+### Assumption A-010
+- Assumption: in Función Pública's edition, wording printed after the mark "TEXTO ANTERIOR" in an article cannot be safely classified as earlier or current wording.
+- Reason: the page marks where earlier wording begins but not where it ends, and in some articles current paragraphs follow it · Impact if wrong: none for accuracy, since NEXO shows that part apart with a warning and leaves it out of search; the cost is that 73 articles are marked "Requiere revisión".
+- Owner/verification: legal reviewer; a consolidated source with validity dates (SUIN-Juriscol) would remove the need.

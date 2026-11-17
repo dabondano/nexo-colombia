@@ -8,7 +8,7 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import Date, DateTime, Index, String, Text, UniqueConstraint, func
+from sqlalchemy import Date, DateTime, Index, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,6 +33,9 @@ class SearchDocument(Base):
     record_date: Mapped[date | None] = mapped_column(Date, index=True)
     jurisdiction_code: Mapped[str] = mapped_column(String(2), default="CO")
     tsv: Mapped[Any] = mapped_column(TSVECTOR)
+    # The title alone, prepared like `tsv`. Records whose title contains every
+    # word searched are listed first (app/search/router.py).
+    title_tsv: Mapped[Any] = mapped_column(TSVECTOR, server_default=text("''::tsvector"))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

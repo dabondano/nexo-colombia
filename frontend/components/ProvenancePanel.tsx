@@ -5,6 +5,8 @@ type Props = {
   provenance: Provenance;
   epistemicLabel: string;
   dataQualityStatus: string;
+  /** Replaces the general meaning of the quality status when a record type has its own criterion. */
+  qualityMeaning?: string;
 };
 
 function Row({ term, children }: { term: string; children: React.ReactNode }) {
@@ -19,7 +21,12 @@ function Row({ term, children }: { term: string; children: React.ReactNode }) {
 const linkClass = "text-brand underline underline-offset-4";
 
 /** "Where does this come from?": shown on every record page (PRD FR-PLT-03). */
-export function ProvenancePanel({ provenance, epistemicLabel, dataQualityStatus }: Props) {
+export function ProvenancePanel({
+  provenance,
+  epistemicLabel,
+  dataQualityStatus,
+  qualityMeaning,
+}: Props) {
   const label = EPISTEMIC_LABELS[epistemicLabel] ?? EPISTEMIC_LABELS.no_verificado;
   const quality = QUALITY_LABELS[dataQualityStatus];
   const sourceVerified = provenance.source_verification_status === "verified";
@@ -57,7 +64,8 @@ export function ProvenancePanel({ provenance, epistemicLabel, dataQualityStatus 
         <Row term="Calidad del registro">
           {quality ? (
             <>
-              <span className="font-medium text-ink">{quality.name}.</span> {quality.meaning}
+              <span className="font-medium text-ink">{quality.name}.</span>{" "}
+              {qualityMeaning ?? quality.meaning}
             </>
           ) : (
             dataQualityStatus

@@ -86,12 +86,22 @@ Common properties of datos.gov.co datasets: API endpoint `https://www.datos.gov.
 ### Source S-023: Senado de la República – website
 - Transparency/open-data page has no structured downloads for bills, votes or senators; bills at `leyes.senado.gov.co`; Gacetas del Congreso at the Imprenta Nacional. robots.txt is the default Joomla file. Verified on 2026-11-17 by reading the page.
 
+### Source S-024: Función Pública – Gestor Normativo, Constitución Política de 1991
+- Institution: Departamento Administrativo de la Función Pública · Page: `https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=4125` · Category: legal texts · Acquisition method: HTML page (one request per synchronization) · Reliability class: 2 (official institutional record)
+- Verified on 2026-11-17: robots.txt has an empty `Disallow` (every path allowed); the page carries no robots meta tag; the whole page was read and loaded. The page is about 1.2 MB.
+- Status of the text: the page states that the data are informative, that Función Pública does not answer for the validity of the norm, and that contents are updated permanently. The most recent constitutional reform it mentions is Acto Legislativo 01 de 2025. NEXO has not checked whether later reforms exist. The text with legal value is the one published in the Gaceta Constitucional and the Diario Oficial.
+- TLS: the server sends its certificate without the Let's Encrypt intermediate that issued it. Browsers fetch the missing certificate themselves; NEXO ships the two public Let's Encrypt certificates (`backend/app/law/certs/`) so that the connection is verified normally. Verification is never switched off.
+- Known limitations: earlier wording follows the mark "TEXTO ANTERIOR" with no mark where it ends (69 articles); some words are struck through (inexequible passages); the labels "TÍTULO I" to "TÍTULO XI" and most "CAPÍTULO 1" labels are not printed (NEXO deduces them by order and says so on each division); the page does not print Chapter 3 of Title IV ("Del estatuto de la oposición"), so article 112 appears under Chapter 2, nor the name of Chapter 4 of Title III ("Del territorio"), both confirmed against the Senate's 2005 edition; the transitory provisions restart their numbering several times and are not loaded yet.
+- Not loaded (data minimization): the editor's lists of cross-references "(Ver Ley …)" and the collapsed case-law lists. Loaded as notes, apart from the wording: notes on reforms and court rulings.
+- Licence: legal texts may be reproduced freely (Ley 23 de 1982, article 41); the site's own terms of use were not reviewed.
+- Why not SUIN-Juriscol: chosen first, but on 2026-11-17 it answered with an empty response both from the workspace and from the owner's browser.
+
 ## C. Not yet verified (leads only)
 
 | Source | Why it matters | Blocker today |
 |---|---|---|
-| SUIN-Juriscol | Consolidated legal texts with validity information | TLS certificate chain fails verification from the workspace |
-| Función Pública – Gestor Normativo | Legal texts with concordances | Same TLS issue; inventory page disallows robots |
+| SUIN-Juriscol | Consolidated legal texts with validity information | Empty response from the workspace and from a regular browser on 2026-11-17 |
+| Función Pública – Gestor Normativo, other norms | Laws and decrees with concordances | Each norm page must be checked like S-024 |
 | Secretaría del Senado (basedoc) | Constitution and laws, annotated | Connection reset |
 | Diario Oficial / Imprenta Nacional (Gacetas) | Official publication of norms; debate and vote records | Host not allowed yet |
 | Consejo de Estado, Corte Suprema, Rama Judicial | Jurisprudence | Hosts not allowed yet |

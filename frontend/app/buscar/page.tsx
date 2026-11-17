@@ -14,13 +14,19 @@ import {
 
 export const metadata: Metadata = {
   title: "Buscar",
-  description: "Búsqueda en los proyectos de ley y las entidades públicas cargados en NEXO Colombia.",
+  description:
+    "Búsqueda en la Constitución, los proyectos de ley y las entidades públicas cargados en NEXO Colombia.",
 };
 
 const PAGE_SIZE = 25;
 const BASE_PATH = "/buscar";
 
 const TYPES: Record<RecordType, { singular: string; plural: string; path: string }> = {
+  legal_provision: {
+    singular: "Artículo de la Constitución",
+    plural: "Artículos de la Constitución",
+    path: "/constitucion",
+  },
   legislative_initiative: {
     singular: "Iniciativa legislativa",
     plural: "Iniciativas legislativas",
@@ -116,7 +122,7 @@ function SearchForm({ q }: { q: string | undefined }) {
     >
       <div className="flex min-w-0 flex-1 basis-64 flex-col gap-1">
         <label htmlFor="busqueda" className="text-sm font-medium">
-          Palabras, número de proyecto o NIT
+          Palabras, número de artículo, número de proyecto o NIT
         </label>
         <input
           id="busqueda"
@@ -125,7 +131,7 @@ function SearchForm({ q }: { q: string | undefined }) {
           required
           maxLength={200}
           defaultValue={q ?? ""}
-          placeholder="Por ejemplo: salud mental, 217/2026C, alcaldía de Tunja"
+          placeholder="Por ejemplo: salud mental, artículo 86, 217/2026C, alcaldía de Tunja"
           className="w-full rounded border border-rule bg-surface px-3 py-2 text-base text-ink"
         />
       </div>
@@ -145,8 +151,10 @@ function HowItWorks() {
       La búsqueda exige todas las palabras escritas, sin distinguir mayúsculas, tildes ni
       plurales. Use comillas para una frase exacta y un guion delante de una palabra para
       excluirla. No reconoce sinónimos. Los resultados se ordenan únicamente por la coincidencia
-      con el texto buscado: pesa más el nombre o el número del registro que el resto de su
-      contenido.
+      con el texto buscado: primero los registros cuyo nombre contiene todas las palabras, y
+      luego pesa más el nombre o el número del registro que el resto de su contenido. En la
+      Constitución solo se busca en el texto que la fuente presenta como vigente, no en sus
+      notas ni en textos anteriores.
     </p>
   );
 }
@@ -163,8 +171,8 @@ async function Results({ searchParams }: { searchParams: Promise<SearchParams> }
       <>
         <SearchForm q={undefined} />
         <Notice>
-          Escriba una o varias palabras para buscar en los proyectos de ley de la Cámara de
-          Representantes y en el directorio de entidades públicas.
+          Escriba una o varias palabras para buscar en la Constitución, en los proyectos de ley
+          de la Cámara de Representantes y en el directorio de entidades públicas.
         </Notice>
         <HowItWorks />
       </>

@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.catalog.models import Institution
 from app.ingestion.text import normalize_for_search
+from app.law.models import LegalInstrument, LegalProvision
 from app.legislation.models import LegislativeInitiative
 from app.search.models import SearchDocument
 
@@ -27,7 +28,9 @@ WEIGHTS: dict[str, ColumnElement[Any]] = {w: literal_column(f"'{w}'") for w in "
 
 INSTITUTION = "institution"
 LEGISLATIVE_INITIATIVE = "legislative_initiative"
-RECORD_TYPES = (LEGISLATIVE_INITIATIVE, INSTITUTION)
+LEGAL_PROVISION = "legal_provision"
+RECORD_TYPES = (LEGAL_PROVISION, LEGISLATIVE_INITIATIVE, INSTITUTION)
+SUMMARY_LENGTH = 240
 
 
 @dataclass(frozen=True)
@@ -64,6 +67,7 @@ def index_entry(session: Session, entry: SearchEntry) -> None:
         "summary": entry.summary,
         "record_date": entry.record_date,
         "tsv": _vector(entry),
+        "title_tsv": func.to_tsvector(TEXT_CONFIG, normalize_for_search(entry.title)),
     }
     statement = insert(SearchDocument).values(id=uuid.uuid4(), **values)
     session.execute(
@@ -135,5 +139,33 @@ def initiative_entry(initiative: LegislativeInitiative) -> SearchEntry:
             "B": [initiative.law_type, initiative.commission, initiative.legislature],
             "C": [initiative.purpose, initiative.status],
             "D": [initiative.authors_text],
+        },
+    )
+
+
+def excerpt(text: str, length: int = SUMMARY_LENGTH) -> str:
+    """The beginning of a text, cut at a word and marked when it was cut."""
+    flat = " ".join(text.split())
+    if len(flat) <= length:
+        return flat
+    return flat[:length].rsplit(" ", 1)[0] + "…"
+
+
+def provision_entry(
+    provision: LegalProvision, instrument: LegalInstrument, text: str
+) -> SearchEntry:
+    """`text` is the wording the source presents as in force (no editor's notes)."""
+    number = provision.number or ""
+    return SearchEntry(
+        record_type=LEGAL_PROVISION,
+        record_id=provision.id,
+        # Search results name the instrument with the record type.
+        title=provision.label,
+        summary=excerpt(text),
+        weighted_text={
+            # "articulo 11", "art 11" and the bare number all find the article.
+            "A": [provision.label, f"art {number}" if number else None, provision.heading],
+            "B": [instrument.title],
+            "C": [text],
         },
     )

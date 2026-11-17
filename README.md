@@ -36,7 +36,7 @@ cp .env.example .env
 uv sync
 uv run alembic upgrade head          # create the tables
 uv run python -m app.sources.registry  # register the verified sources
-uv run python -m app.ingestion.cli all # load entities and bills from datos.gov.co (about a minute)
+uv run python -m app.ingestion.cli all # load entities, bills and the Constitution (about a minute)
 uv run python -m app.search.reindex    # only needed to rebuild the search index for existing data
 uv run uvicorn app.main:app --reload   # http://localhost:8000/api/v1/docs
 
