@@ -11,6 +11,7 @@ from app.core.config import get_settings
 # PostgreSQL schemas (see docs/03-data-model.md, section 2).
 CORE_SCHEMA = "core"
 RAW_SCHEMA = "raw"
+SEARCH_SCHEMA = "search"
 
 NAMING_CONVENTION = {
     "ix": "ix_%(table_name)s_%(column_0_name)s",

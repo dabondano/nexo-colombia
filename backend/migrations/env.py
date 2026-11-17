@@ -9,6 +9,7 @@ from app.catalog import models as _catalog_models  # noqa: F401  (registers tabl
 from app.core.config import get_settings
 from app.core.db import CORE_SCHEMA, Base
 from app.legislation import models as _legislation_models  # noqa: F401
+from app.search import models as _search_models  # noqa: F401
 from app.sources import models as _sources_models  # noqa: F401
 
 config = context.config

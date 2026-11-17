@@ -20,7 +20,7 @@ TEST_DATABASE_URL = os.environ.get(
 )
 os.environ["NEXO_DATABASE_URL"] = TEST_DATABASE_URL
 
-from app.core.db import CORE_SCHEMA, get_engine  # noqa: E402
+from app.core.db import CORE_SCHEMA, SEARCH_SCHEMA, get_engine  # noqa: E402
 from app.main import create_app  # noqa: E402
 
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,15 +32,18 @@ def alembic_config() -> Config:
     return cfg
 
 
+def _drop_schemas() -> None:
+    with get_engine().begin() as conn:
+        for schema in (SEARCH_SCHEMA, CORE_SCHEMA):
+            conn.execute(text(f"DROP SCHEMA IF EXISTS {schema} CASCADE"))
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _migrated_database() -> Iterator[None]:
-    engine = get_engine()
-    with engine.begin() as conn:
-        conn.execute(text(f"DROP SCHEMA IF EXISTS {CORE_SCHEMA} CASCADE"))
+    _drop_schemas()
     command.upgrade(alembic_config(), "head")
     yield
-    with engine.begin() as conn:
-        conn.execute(text(f"DROP SCHEMA IF EXISTS {CORE_SCHEMA} CASCADE"))
+    _drop_schemas()
 
 
 @pytest.fixture
@@ -51,7 +54,8 @@ def session() -> Iterator[Session]:
     with engine.begin() as conn:
         conn.execute(
             text(
-                f"TRUNCATE {CORE_SCHEMA}.institution, {CORE_SCHEMA}.legislative_initiative, "
+                f"TRUNCATE {SEARCH_SCHEMA}.document, "
+                f"{CORE_SCHEMA}.institution, {CORE_SCHEMA}.legislative_initiative, "
                 f"{CORE_SCHEMA}.sync_reject, {CORE_SCHEMA}.source_record, "
                 f"{CORE_SCHEMA}.sync_run, {CORE_SCHEMA}.source CASCADE"
             )

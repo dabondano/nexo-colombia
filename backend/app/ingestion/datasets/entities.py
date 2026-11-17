@@ -16,6 +16,7 @@ from app.catalog.models import Institution
 from app.core.labels import DataQualityStatus
 from app.ingestion.pipeline import DatasetSpec, Payload, RowRejected
 from app.ingestion.text import clean, normalize_for_search
+from app.search.indexing import index_entry, institution_entry
 
 DATASET_ID = "h7zv-k39x"
 SOURCE_REF = f"datos.gov.co:{DATASET_ID}"
@@ -105,16 +106,22 @@ def map_row(payload: Payload) -> dict[str, Any]:
 def upsert(
     session: Session, external_id: str, values: dict[str, Any], source_record_id: uuid.UUID
 ) -> bool:
-    existing = session.scalar(select(Institution).where(Institution.official_code == external_id))
-    if existing is None:
-        session.add(
-            Institution(official_code=external_id, source_record_id=source_record_id, **values)
+    institution = session.scalar(
+        select(Institution).where(Institution.official_code == external_id)
+    )
+    inserted = institution is None
+    if institution is None:
+        institution = Institution(
+            id=uuid.uuid4(), official_code=external_id, source_record_id=source_record_id, **values
         )
-        return True
-    for key, value in values.items():
-        setattr(existing, key, value)
-    existing.source_record_id = source_record_id
-    return False
+        session.add(institution)
+    else:
+        for key, value in values.items():
+            setattr(institution, key, value)
+        institution.source_record_id = source_record_id
+    session.flush()
+    index_entry(session, institution_entry(institution))
+    return inserted
 
 
 SPEC = DatasetSpec(

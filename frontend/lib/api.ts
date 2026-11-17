@@ -120,6 +120,25 @@ export type InitiativeFilters = {
   origin_chamber: FilterOption[];
 };
 
+export type RecordType = "institution" | "legislative_initiative";
+
+export type SearchHit = {
+  record_type: RecordType;
+  record_id: string;
+  title: string;
+  summary: string | null;
+  record_date: string | null;
+};
+
+export type SearchPage = {
+  query: string;
+  total: number;
+  limit: number;
+  offset: number;
+  counts: { record_type: RecordType; count: number }[];
+  items: SearchHit[];
+};
+
 export type ApiResult<T> =
   | { ok: true; data: T }
   | { ok: false; reason: string; notFound: boolean };
@@ -165,3 +184,5 @@ export const fetchInitiatives = (params: Params) =>
 export const fetchInitiativeFilters = () => getJson<InitiativeFilters>("/initiatives/filters");
 export const fetchInitiative = (id: string) =>
   getJson<Initiative>(`/initiatives/${encodeURIComponent(id)}`);
+
+export const fetchSearch = (params: Params) => getJson<SearchPage>("/search", params);
