@@ -11,4 +11,11 @@ def test_migrations_downgrade_and_upgrade_cleanly() -> None:
     assert "source" not in inspect(get_engine()).get_table_names(schema=CORE_SCHEMA)
     command.upgrade(cfg, "head")
     tables = set(inspect(get_engine()).get_table_names(schema=CORE_SCHEMA))
-    assert {"source", "sync_run", "source_record"} <= tables
+    assert {
+        "source",
+        "sync_run",
+        "source_record",
+        "sync_reject",
+        "institution",
+        "legislative_initiative",
+    } <= tables

@@ -8,8 +8,10 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.catalog.router import router as institutions_router
 from app.core.config import get_settings
 from app.core.db import get_session
+from app.legislation.router import router as initiatives_router
 from app.sources.router import router as sources_router
 
 API_PREFIX = "/api/v1"
@@ -52,6 +54,8 @@ def create_app() -> FastAPI:
 
     app.include_router(health, prefix=API_PREFIX)
     app.include_router(sources_router, prefix=API_PREFIX)
+    app.include_router(institutions_router, prefix=API_PREFIX)
+    app.include_router(initiatives_router, prefix=API_PREFIX)
     return app
 
 

@@ -5,9 +5,11 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, text
 
+from app.catalog import models as _catalog_models  # noqa: F401  (registers tables)
 from app.core.config import get_settings
 from app.core.db import CORE_SCHEMA, Base
-from app.sources import models as _sources_models  # noqa: F401  (registers tables)
+from app.legislation import models as _legislation_models  # noqa: F401
+from app.sources import models as _sources_models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

@@ -101,22 +101,27 @@ def test_source_record_is_append_only_by_content_hash(session: Session) -> None:
     run = SyncRun(source_id=source.id, mode=SyncMode.FULL.value)
     session.add(run)
     session.flush()
+    first_download = datetime(2026, 1, 1, tzinfo=UTC)
 
-    def record(content_hash: str) -> SourceRecord:
+    def record(content_hash: str, acquired_at: datetime = first_download) -> SourceRecord:
         return SourceRecord(
             source_id=source.id,
             sync_run_id=run.id,
             external_id="registro-1",
+            acquired_at=acquired_at,
             content_hash=content_hash,
             extraction_method="test",
             payload={"campo": "valor"},
         )
 
-    # A changed item (new hash) is a new row next to the old one.
-    session.add_all([record("a" * 64), record("b" * 64)])
+    # A changed item (new hash) is a new row next to the old one, and a source
+    # may return to earlier content in a later download.
+    session.add_all(
+        [record("a" * 64), record("b" * 64), record("a" * 64, first_download + timedelta(days=1))]
+    )
     session.commit()
 
-    # The same item with the same content cannot be stored twice.
+    # The same item with the same content cannot be stored twice in one download.
     session.add(record("a" * 64))
     with pytest.raises(IntegrityError):
         session.commit()

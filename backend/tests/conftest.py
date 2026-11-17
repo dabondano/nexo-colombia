@@ -51,8 +51,9 @@ def session() -> Iterator[Session]:
     with engine.begin() as conn:
         conn.execute(
             text(
-                f"TRUNCATE {CORE_SCHEMA}.source_record, {CORE_SCHEMA}.sync_run, "
-                f"{CORE_SCHEMA}.source CASCADE"
+                f"TRUNCATE {CORE_SCHEMA}.institution, {CORE_SCHEMA}.legislative_initiative, "
+                f"{CORE_SCHEMA}.sync_reject, {CORE_SCHEMA}.source_record, "
+                f"{CORE_SCHEMA}.sync_run, {CORE_SCHEMA}.source CASCADE"
             )
         )
 

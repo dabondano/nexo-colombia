@@ -51,7 +51,8 @@ REGISTRY: list[RegistryEntry] = [
         "access_restrictions": None,
         "known_limitations": (
             "Autores en texto libre; contiene filas de relleno; no incluye historial "
-            "de debates ni votaciones."
+            "de debates ni votaciones; en algunas filas el número de Senado llega con "
+            "el texto «No Aplica» intercalado entre sus caracteres."
         ),
     },
     {
