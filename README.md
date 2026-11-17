@@ -8,7 +8,7 @@ NEXO Colombia is a legal intelligence, public institutional research, civic educ
 
 ## Status
 
-**Milestone M1 (first real data).** The platform loads two official datasets from datos.gov.co, the directory of public entities (Función Pública) and the bills registry of the Cámara de Representantes, and shows them in searchable pages where every record links to its source. Everything else is still at the design stage, and nothing is deployed. See [docs/STATUS.md](docs/STATUS.md).
+**Milestone M2 (browse and search).** The platform loads two official datasets from datos.gov.co, the directory of public entities (Función Pública) and the bills registry of the Cámara de Representantes, shows them in pages where every record links to its source, and searches both from one box on every page. Everything else is still at the design stage, and nothing is deployed. See [docs/STATUS.md](docs/STATUS.md).
 
 Status stages used in this project: Diseñado → Implementado → Probado → Integrado → Desplegado.
 
@@ -37,6 +37,7 @@ uv sync
 uv run alembic upgrade head          # create the tables
 uv run python -m app.sources.registry  # register the verified sources
 uv run python -m app.ingestion.cli all # load entities and bills from datos.gov.co (about a minute)
+uv run python -m app.search.reindex    # only needed to rebuild the search index for existing data
 uv run uvicorn app.main:app --reload   # http://localhost:8000/api/v1/docs
 
 # Checks

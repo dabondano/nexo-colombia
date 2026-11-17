@@ -56,5 +56,6 @@ export const MODULES: NexoModule[] = [
     summary:
       "Búsqueda unificada y grafo de conocimiento que conecta todos los módulos.",
     stage: "Diseñado",
+    available: { label: "Búsqueda en proyectos y entidades", href: "/buscar" },
   },
 ];

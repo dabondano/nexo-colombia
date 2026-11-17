@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-17 (after M1)
+Last updated: 2026-11-17 (after M2)
 
 ## Completed work
 
@@ -27,16 +27,20 @@ Last updated: 2026-11-17 (after M1)
 | Cámara "Proyectos de Ley" loaded into `core.legislative_initiative` | Integrado (development database only) | Run of 2026-11-17: 6,606 rows seen, 6,605 loaded, 1 rejected (the placeholder row "FALLA EN EL APLICATIVO", stored in `core.sync_reject`) |
 | Institutions API (`/api/v1/institutions`, filters, detail with provenance) | Probado | `backend/tests/test_records_api.py` |
 | Initiatives API (`/api/v1/initiatives`, filters, detail with provenance) | Probado | `backend/tests/test_records_api.py` |
+| Search index `search.document`, kept up to date as records are published and rebuildable from the records (`python -m app.search.reindex`) | Probado | `backend/tests/test_search.py`; 13,009 documents built from the loaded data in the development database |
+| Unified search API (`/api/v1/search`): all words required, accents, capitals and plurals ignored, quoted phrases, exclusions, bill numbers and NIT, filter by record type and date range, counts per type | Probado | `backend/tests/test_search.py` |
+| Search box on every page and results page "Buscar" | Implementado | Builds and lints; exercised in a browser against the real data (header search, type tabs, paging, opening a record, numbers, phrases, empty and hostile input, phone width, no console errors); no automated UI tests yet |
 | Web pages "Instituciones" and "Legislación": search, filters, paging, record page with the "Origen de este registro" panel; home page shows counts of loaded records with their source | Implementado | Builds and lints; exercised in a browser against the real data at desktop and phone widths (search, filters, paging, record pages, missing records, keyboard skip link, no console errors); no automated UI tests yet |
 | Web shell in Spanish and "Fuentes" page reading the API | Implementado | Same manual check; no automated UI tests yet |
 | CI workflow (backend lint, types, tests; frontend lint, build) | Integrado | `.github/workflows/ci.yml`; runs on every pull request |
 | Docker Compose stack and API image | Implementado | Written but **not run**: no Docker daemon was available in the build workspace |
 
-Module status: **Legislación** and **Instituciones** each have a first working part (bill registry; entity directory). Every other part of those modules, and the modules Academia, Recursos Públicos, Análisis Político and Observatorio, remain **Diseñado**. Nothing is deployed: the data above exists only in the development database of the build workspace and must be loaded again wherever the platform is installed (`python -m app.ingestion.cli all`, about one minute).
+Module status: **Legislación**, **Instituciones** and **Observatorio** each have a first working part (bill registry; entity directory; unified search over both). Every other part of those modules, and the modules Academia, Recursos Públicos and Análisis Político, remain **Diseñado**. Nothing is deployed: the data above exists only in the development database of the build workspace and must be loaded again wherever the platform is installed (`python -m app.ingestion.cli all`, about one minute).
 
 ## Pending tasks
 
-- M2 remainder: unified search across record types (full-text), links between records.
+- Links between records (for example from a bill to its authors or to an entity); needs reliable identifiers.
+- Search improvements for a later phase: related words and synonyms (semantic search, Phase 4), highlighted excerpts, date-range controls in the page (the API already accepts them).
 - Scheduled synchronization (today the load is started by hand) and a sync dashboard for data stewards.
 - Link bill authors (free text in the source) to person records; needs a reliable member dataset (M4).
 - Inspect the owner's local `prototipo` folder if it contains earlier work (access not granted yet).
@@ -51,7 +55,9 @@ Module status: **Legislación** and **Instituciones** each have a first working 
 - Cámara "Representantes 2026-2027" dataset has misaligned columns.
 - Cámara "Proyectos de Ley": in 194 rows the Senate number is published with the text "No Aplica" inserted between every character. NEXO reconstructs the number only when the pattern is exact and the result looks like a bill number, keeps the published value in the raw record, and shows a note on the record page (assumption A-008). One reconstructed value was compared with the bill's page at camara.gov.co and matched; the other 193 were not checked individually.
 - Bill status is the one published in the dataset (last updated by the source on 2026-09-17) and may lag behind actual proceedings.
-- A record page for an unknown identifier shows "Página no encontrada" but answers with HTTP status 200, because the page shell is sent before the record is looked up. To revisit with the search work in M2.
+- Search matches words and their plurals only: "educación" does not find "educativo". Results are ordered by text match alone.
+- A database that already holds records must rebuild its search index once after this version is installed (`python -m app.search.reindex`); new loads index records as they are published.
+- A record page for an unknown identifier shows "Página no encontrada" but answers with HTTP status 200, because the page shell is sent before the record is looked up. Not yet addressed.
 
 ## Architectural decisions
 

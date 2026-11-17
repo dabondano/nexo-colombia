@@ -16,6 +16,7 @@ from app.core.labels import DataQualityStatus
 from app.ingestion.pipeline import PROCESSING_NOTES, DatasetSpec, Payload, RowRejected
 from app.ingestion.text import clean, normalize_for_search, parse_socrata_date
 from app.legislation.models import LegislativeInitiative
+from app.search.indexing import index_entry, initiative_entry
 
 DATASET_ID = "kcxp-nxum"
 SOURCE_REF = f"datos.gov.co:{DATASET_ID}"
@@ -138,20 +139,22 @@ def map_row(payload: Payload) -> dict[str, Any]:
 def upsert(
     session: Session, external_id: str, values: dict[str, Any], source_record_id: uuid.UUID
 ) -> bool:
-    existing = session.scalar(
+    initiative = session.scalar(
         select(LegislativeInitiative).where(LegislativeInitiative.source_key == external_id)
     )
-    if existing is None:
-        session.add(
-            LegislativeInitiative(
-                source_key=external_id, source_record_id=source_record_id, **values
-            )
+    inserted = initiative is None
+    if initiative is None:
+        initiative = LegislativeInitiative(
+            id=uuid.uuid4(), source_key=external_id, source_record_id=source_record_id, **values
         )
-        return True
-    for key, value in values.items():
-        setattr(existing, key, value)
-    existing.source_record_id = source_record_id
-    return False
+        session.add(initiative)
+    else:
+        for key, value in values.items():
+            setattr(initiative, key, value)
+        initiative.source_record_id = source_record_id
+    session.flush()
+    index_entry(session, initiative_entry(initiative))
+    return inserted
 
 
 SPEC = DatasetSpec(

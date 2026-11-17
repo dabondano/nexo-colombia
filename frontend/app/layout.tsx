@@ -36,17 +36,45 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 Sistema de Conocimiento e Inteligencia Pública
               </span>
             </Link>
-            <nav aria-label="Navegación principal">
-              <ul className="flex flex-wrap gap-x-6 gap-y-1 text-base">
-                {NAV.map((item) => (
-                  <li key={item.href}>
-                    <Link href={item.href} className="underline-offset-4 hover:underline">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            <div className="flex flex-col gap-3 sm:items-end">
+              <form
+                action="/buscar"
+                method="get"
+                role="search"
+                aria-label="Búsqueda en todo el sitio"
+                className="flex gap-2"
+              >
+                <label htmlFor="busqueda-global" className="sr-only">
+                  Buscar en NEXO Colombia
+                </label>
+                <input
+                  id="busqueda-global"
+                  name="q"
+                  type="search"
+                  required
+                  maxLength={200}
+                  placeholder="Buscar proyectos y entidades"
+                  className="w-full min-w-0 rounded border border-brand-ink/40 bg-surface px-3 py-1.5 text-base text-ink sm:w-72"
+                />
+                <button
+                  type="submit"
+                  className="rounded border border-brand-ink/60 px-4 py-1.5 font-medium hover:bg-brand-ink/10"
+                >
+                  Buscar
+                </button>
+              </form>
+              <nav aria-label="Navegación principal">
+                <ul className="flex flex-wrap gap-x-6 gap-y-1 text-base">
+                  {NAV.map((item) => (
+                    <li key={item.href}>
+                      <Link href={item.href} className="underline-offset-4 hover:underline">
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
           </div>
         </header>
         <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
