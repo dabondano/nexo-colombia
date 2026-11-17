@@ -8,9 +8,45 @@ NEXO Colombia is a legal intelligence, public institutional research, civic educ
 
 ## Status
 
-**Phase 1 (requirements and design).** No application code exists yet. Every feature is at the stage **Diseñado**. See [docs/STATUS.md](docs/STATUS.md).
+**Milestone M0 (foundation).** The repository contains a working API skeleton, the provenance tables, a source registry page and automated checks. No module of the platform is functional yet. See [docs/STATUS.md](docs/STATUS.md).
 
 Status stages used in this project: Diseñado → Implementado → Probado → Integrado → Desplegado.
+
+## Repository layout
+
+| Path | Content |
+|---|---|
+| `backend/` | API (Python, FastAPI, SQLAlchemy, Alembic) and its tests |
+| `frontend/` | Web application (Next.js, React, TypeScript, Tailwind CSS) |
+| `docs/` | Requirements, architecture, data model, source registry, status |
+| `docker-compose.yml` | Local database and API |
+| `.github/workflows/ci.yml` | Lint, type checks, tests and build on every pull request |
+
+## Development
+
+Requirements: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 22, pnpm, PostgreSQL 16 (or Docker).
+
+```bash
+# Database (either Docker or a local PostgreSQL with a role and database named "nexo")
+docker compose up -d db
+
+# API
+cd backend
+cp .env.example .env
+uv sync
+uv run alembic upgrade head          # create the tables
+uv run python -m app.sources.registry  # register the verified sources
+uv run uvicorn app.main:app --reload   # http://localhost:8000/api/v1/docs
+
+# Checks
+uv run ruff check . && uv run mypy app tests
+uv run pytest                        # needs a database named "nexo_test"
+
+# Web
+cd ../frontend
+pnpm install
+pnpm dev                             # http://localhost:3000
+```
 
 ## Documentation
 

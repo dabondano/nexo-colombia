@@ -1,0 +1,30 @@
+# Local development stack. The password below is for local use only.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: nexo
+      POSTGRES_PASSWORD: nexo
+      POSTGRES_DB: nexo
+    ports:
+      - "5432:5432"
+    volumes:
+      - nexo_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexo -d nexo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      NEXO_DATABASE_URL: postgresql+psycopg://nexo:nexo@db:5432/nexo
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  nexo_db:
