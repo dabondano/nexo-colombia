@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-17
+Last updated: 2026-11-17 (after M0)
 
 ## Completed work
 
@@ -15,14 +15,24 @@ Last updated: 2026-11-17
 
 ## Current implementation
 
-No application code exists. No feature is beyond **Diseñado**.
+| Item | Stage | Evidence |
+|---|---|---|
+| API skeleton: health endpoints, settings, OpenAPI | Probado | `backend/tests/test_health.py` |
+| Provenance tables (`core.source`, `core.sync_run`, `core.source_record`) with migration | Probado | `backend/tests/test_sources.py`, `test_migrations.py` (upgrade and downgrade) |
+| Source registry API (`/api/v1/sources`) seeded with four sources verified on 2026-11-17 | Probado | `backend/tests/test_sources.py` |
+| Controlled vocabularies (epistemic labels, confidence classes, data-quality status) | Probado | `backend/tests/test_labels.py` |
+| Web shell in Spanish: home page with honest project status, "Fuentes" page reading the API | Implementado | Builds and lints; checked manually in a browser at desktop and phone widths; no automated UI tests yet |
+| CI workflow (backend lint, types, tests; frontend lint, build) | Implementado | `.github/workflows/ci.yml`; first run happens on the pull request |
+| Docker Compose stack and API image | Implementado | Written but **not run**: no Docker daemon was available in the build workspace |
+
+No module of the platform (Academia, Legislación, Instituciones, Recursos Públicos, Análisis Político, Observatorio) is beyond **Diseñado**. No data from any source has been ingested yet.
 
 ## Pending tasks
 
-- Scaffold M0 (repository created on 2026-11-17).
+- M1: generic datos.gov.co connector; ingest "Universo de entidades" and "Proyectos de Ley" with field allow-lists, validation and sync reports.
 - Inspect the owner's local `prototipo` folder if it contains earlier work (access not granted yet).
 - Confirm an official, reachable source for the Constitution text.
-- Detailed API specification (OpenAPI) and SQL migrations: to be produced with M0/M1 so they are tested as written.
+- Authentication and roles (M4); automated UI and accessibility tests.
 - Phase 1 items not yet produced: full user-journey diagrams and detailed ER diagrams per module.
 
 ## Known issues
