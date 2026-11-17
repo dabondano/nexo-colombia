@@ -10,16 +10,16 @@ from sqlalchemy.orm import Session
 from app.core.db import get_session
 from app.core.listing import DEFAULT_LIMIT, LimitParam, OffsetParam
 from app.ingestion.text import normalize_for_search
-from app.search.indexing import INSTITUTION, LEGISLATIVE_INITIATIVE, RECORD_TYPES, TEXT_CONFIG
+from app.search.indexing import RECORD_TYPES, TEXT_CONFIG
 from app.search.models import SearchDocument
 from app.search.schemas import SearchHit, SearchPage, TypeCount
 
 router = APIRouter(prefix="/search", tags=["search"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
-RecordType = Literal["institution", "legislative_initiative"]
+RecordType = Literal["legal_provision", "legislative_initiative", "institution"]
 
-assert set(RecordType.__args__) == {INSTITUTION, LEGISLATIVE_INITIATIVE}  # type: ignore[attr-defined]
+assert set(RecordType.__args__) == set(RECORD_TYPES)  # type: ignore[attr-defined]
 
 
 def _query(text: str) -> ColumnElement[Any]:
@@ -71,13 +71,16 @@ def search(
     else:
         total = sum(by_type.values())
 
-    # Results are ordered only by how well the text matches the words searched
+    # Results are ordered only by how well the text matches the words searched:
+    # first the records whose title contains every word ("artículo 86" finds the
+    # article before bills that mention it), then by how well the rest matches
     # (names and numbers count more than supporting text), then alphabetically.
+    in_title = SearchDocument.title_tsv.op("@@")(query)
     rank = func.ts_rank_cd(SearchDocument.tsv, query, 1)
     rows = session.scalars(
         select(SearchDocument)
         .where(*conditions)
-        .order_by(rank.desc(), SearchDocument.title, SearchDocument.record_id)
+        .order_by(in_title.desc(), rank.desc(), SearchDocument.title, SearchDocument.record_id)
         .limit(limit)
         .offset(offset)
     ).all()

@@ -13,6 +13,8 @@ export const metadata: Metadata = {
 
 const NAV = [
   { href: "/", label: "Inicio" },
+  { href: "/aprender", label: "Aprender" },
+  { href: "/constitucion", label: "Constitución" },
   { href: "/legislacion", label: "Legislación" },
   { href: "/instituciones", label: "Instituciones" },
   { href: "/fuentes", label: "Fuentes" },
@@ -53,7 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   type="search"
                   required
                   maxLength={200}
-                  placeholder="Buscar proyectos y entidades"
+                  placeholder="Buscar en NEXO Colombia"
                   className="w-full min-w-0 rounded border border-brand-ink/40 bg-surface px-3 py-1.5 text-base text-ink sm:w-72"
                 />
                 <button

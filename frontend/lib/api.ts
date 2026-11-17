@@ -120,7 +120,59 @@ export type InitiativeFilters = {
   origin_chamber: FilterOption[];
 };
 
-export type RecordType = "institution" | "legislative_initiative";
+export type InstrumentSummary = {
+  id: string;
+  slug: string;
+  title: string;
+  instrument_type: string;
+  year: number | null;
+  /** What is known about how current the loaded edition is. */
+  edition_note: string | null;
+};
+
+export type OutlineItem = {
+  id: string;
+  parent_id: string | null;
+  path: string;
+  kind: "preambulo" | "titulo" | "capitulo" | "articulo";
+  label: string;
+  heading: string | null;
+  excerpt: string | null;
+  data_quality_status: string;
+};
+
+export type Instrument = InstrumentSummary & {
+  article_count: number;
+  articles_needing_review: number;
+  outline: OutlineItem[];
+  provenance: Provenance;
+};
+
+export type ProvisionRef = { id: string; path: string; label: string; heading: string | null };
+
+/**
+ * "text": wording. "note": editor's note. "after_previous_mark": wording the
+ * source prints after its mark "TEXTO ANTERIOR", which may not be in force.
+ */
+export type Segment = { kind: "text" | "note" | "after_previous_mark"; text: string };
+
+export type Provision = {
+  id: string;
+  path: string;
+  kind: OutlineItem["kind"];
+  label: string;
+  heading: string | null;
+  data_quality_status: string;
+  instrument: InstrumentSummary;
+  ancestors: ProvisionRef[];
+  segments: Segment[];
+  recorded_at: string | null;
+  previous: ProvisionRef | null;
+  next: ProvisionRef | null;
+  provenance: Provenance;
+};
+
+export type RecordType = "legal_provision" | "legislative_initiative" | "institution";
 
 export type SearchHit = {
   record_type: RecordType;
@@ -184,5 +236,20 @@ export const fetchInitiatives = (params: Params) =>
 export const fetchInitiativeFilters = () => getJson<InitiativeFilters>("/initiatives/filters");
 export const fetchInitiative = (id: string) =>
   getJson<Initiative>(`/initiatives/${encodeURIComponent(id)}`);
+
+export const CONSTITUTION_SLUG = "constitucion-politica-1991";
+export const fetchInstrument = (slug: string) =>
+  getJson<Instrument>(`/instruments/${encodeURIComponent(slug)}`);
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * A provision of the Constitution by its stable key ("articulo-11"), or by its
+ * record id, which search results use.
+ */
+export const fetchConstitutionProvision = (key: string) =>
+  UUID.test(key)
+    ? getJson<Provision>(`/provisions/${encodeURIComponent(key)}`)
+    : getJson<Provision>(`/instruments/${CONSTITUTION_SLUG}/provisions/${encodeURIComponent(key)}`);
 
 export const fetchSearch = (params: Params) => getJson<SearchPage>("/search", params);

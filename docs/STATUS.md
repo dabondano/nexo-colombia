@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-17 (after M2)
+Last updated: 2026-11-17 (after M3)
 
 ## Completed work
 
@@ -32,10 +32,17 @@ Last updated: 2026-11-17 (after M2)
 | Search box on every page and results page "Buscar" | Implementado | Builds and lints; exercised in a browser against the real data (header search, type tabs, paging, opening a record, numbers, phrases, empty and hostile input, phone width, no console errors); no automated UI tests yet |
 | Web pages "Instituciones" and "Legislación": search, filters, paging, record page with the "Origen de este registro" panel; home page shows counts of loaded records with their source | Implementado | Builds and lints; exercised in a browser against the real data at desktop and phone widths (search, filters, paging, record pages, missing records, keyboard skip link, no console errors); no automated UI tests yet |
 | Web shell in Spanish and "Fuentes" page reading the API | Implementado | Same manual check; no automated UI tests yet |
+| Law model (`core.legal_instrument`, `core.legal_provision`, `core.provision_version`): provisions as a tree with stable keys, wording versioned (a changed wording adds a version, at most one current) | Probado | `backend/tests/test_constitution.py`, `test_migrations.py` |
+| Constitution reader for Función Pública's page: preamble, titles, chapters and articles; editor's notes, wording after "TEXTO ANTERIOR" and struck-through words kept apart; stops on an unexpected structure | Probado | `backend/tests/test_constitution.py` (page with the same HTML patterns) |
+| Constitution loaded into the law tables | Integrado (development database only) | Run of 2026-11-17 from the live page: 448 rows (the instrument, the preamble, 13 titles, 49 chapters, 384 articles: 1 to 380 plus 22A, 178A, 238A and 257A), 0 rejected; 73 articles marked incomplete because the source mixes in earlier or struck-through wording; a second run reported 448 unchanged |
+| Law API (`/api/v1/instruments`, `/instruments/{slug}` with outline, `/instruments/{slug}/provisions/{key}`, `/provisions/{id}`), with ancestors, previous and next, and provenance | Probado | `backend/tests/test_constitution.py` |
+| Articles in the unified search (wording presented as in force only; records whose title has every word come first, so "artículo 86" finds the article) | Probado | `backend/tests/test_constitution.py`, `test_search.py`; 13,393 documents in the development database |
+| Web pages "Constitución" (outline with edition note and review marks) and article page (wording, notes, earlier wording and struck words shown apart, warning, neighbours, provenance) | Implementado | Builds and lints; exercised in a browser against the loaded text (outline counts, articles 11, 12 and 231, preamble, missing article, search, phone width, no console errors); no automated UI tests yet |
+| First learning path "Aprender" (two lessons: how the State is organized, how a law is made; glossary and review questions), every statement labelled and linked to its articles | Implementado (draft) | Every one of the 38 links checked in a browser and resolving to the right article; **content not yet reviewed by a legally qualified person** (A-007) |
 | CI workflow (backend lint, types, tests; frontend lint, build) | Integrado | `.github/workflows/ci.yml`; runs on every pull request |
 | Docker Compose stack and API image | Implementado | Written but **not run**: no Docker daemon was available in the build workspace |
 
-Module status: **Legislación**, **Instituciones** and **Observatorio** each have a first working part (bill registry; entity directory; unified search over both). Every other part of those modules, and the modules Academia, Recursos Públicos and Análisis Político, remain **Diseñado**. Nothing is deployed: the data above exists only in the development database of the build workspace and must be loaded again wherever the platform is installed (`python -m app.ingestion.cli all`, about one minute).
+Module status: **Legislación**, **Instituciones** and **Observatorio** each have a first working part (Constitution explorer and bill registry; entity directory; unified search over all three). **Academia** has a first draft learning path awaiting legal review. Every other part of those modules, and the modules Recursos Públicos and Análisis Político, remain **Diseñado**. Nothing is deployed: the data above exists only in the development database of the build workspace and must be loaded again wherever the platform is installed (`python -m app.ingestion.cli all`, about one minute).
 
 ## Pending tasks
 
@@ -44,19 +51,22 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 - Scheduled synchronization (today the load is started by hand) and a sync dashboard for data stewards.
 - Link bill authors (free text in the source) to person records; needs a reliable member dataset (M4).
 - Inspect the owner's local `prototipo` folder if it contains earlier work (access not granted yet).
-- Confirm an official, reachable source for the Constitution text (M3).
+- Legal review of the learning path and of the Constitution explorer (A-007, A-009, A-010); name the reviewer.
+- Transitory provisions of the Constitution; laws and decrees; links from a bill to the norm it would change.
+- Compare the Constitution with a consolidated source with validity dates (SUIN-Juriscol) once it answers.
 - Authentication and roles (M4); automated UI and accessibility tests.
 - Phase 1 items not yet produced: full user-journey diagrams and detailed ER diagrams per module.
 
 ## Known issues
 
-- SUIN-Juriscol and Función Pública fail TLS verification from the workspace; Secretaría del Senado resets connections.
+- SUIN-Juriscol gives an empty response (from the workspace and from a regular browser); Secretaría del Senado resets connections. Función Pública omits an intermediate certificate; NEXO supplies it (`backend/app/law/certs/README.md`).
+- The Constitution edition loaded is informative, mentions reforms up to Acto Legislativo 01 de 2025, and its currency after that has not been checked. Pages say so.
 - Hosts not yet allowed: Rama Judicial, Consejo de Estado, Corte Suprema, Registraduría, Imprenta Nacional, Portal de Transparencia Económica.
 - Cámara "Representantes 2026-2027" dataset has misaligned columns.
 - Cámara "Proyectos de Ley": in 194 rows the Senate number is published with the text "No Aplica" inserted between every character. NEXO reconstructs the number only when the pattern is exact and the result looks like a bill number, keeps the published value in the raw record, and shows a note on the record page (assumption A-008). One reconstructed value was compared with the bill's page at camara.gov.co and matched; the other 193 were not checked individually.
 - Bill status is the one published in the dataset (last updated by the source on 2026-09-17) and may lag behind actual proceedings.
 - Search matches words and their plurals only: "educación" does not find "educativo". Results are ordered by text match alone.
-- A database that already holds records must rebuild its search index once after this version is installed (`python -m app.search.reindex`); new loads index records as they are published.
+- A database that already holds records must rebuild its search index once after this version is installed (`python -m app.search.reindex`), so that title matches are listed first; new loads index records as they are published.
 - A record page for an unknown identifier shows "Página no encontrada" but answers with HTTP status 200, because the page shell is sent before the record is looked up. Not yet addressed.
 
 ## Architectural decisions

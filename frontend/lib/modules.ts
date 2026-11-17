@@ -19,6 +19,7 @@ export const MODULES: NexoModule[] = [
     summary:
       "Educación cívica y jurídica: la Constitución, la estructura del Estado, el trámite legislativo, el sistema electoral y la rama judicial.",
     stage: "Diseñado",
+    available: { label: "Primera ruta de aprendizaje (borrador)", href: "/aprender" },
   },
   {
     number: "02",
@@ -26,7 +27,7 @@ export const MODULES: NexoModule[] = [
     summary:
       "Investigación de normas, proyectos de ley y jurisprudencia, con historial de trámite y citas verificables.",
     stage: "Diseñado",
-    available: { label: "Proyectos de ley de la Cámara", href: "/legislacion" },
+    available: { label: "Constitución y proyectos de ley", href: "/constitucion" },
   },
   {
     number: "03",
@@ -56,6 +57,6 @@ export const MODULES: NexoModule[] = [
     summary:
       "Búsqueda unificada y grafo de conocimiento que conecta todos los módulos.",
     stage: "Diseñado",
-    available: { label: "Búsqueda en proyectos y entidades", href: "/buscar" },
+    available: { label: "Búsqueda en la Constitución, proyectos y entidades", href: "/buscar" },
   },
 ];

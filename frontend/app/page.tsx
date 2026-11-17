@@ -2,7 +2,14 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Notice } from "@/components/Notice";
 import { StageBadge } from "@/components/StageBadge";
-import { fetchInitiatives, fetchInstitutions, fetchSources, type Source } from "@/lib/api";
+import {
+  CONSTITUTION_SLUG,
+  fetchInitiatives,
+  fetchInstitutions,
+  fetchInstrument,
+  fetchSources,
+  type Source,
+} from "@/lib/api";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { MODULES } from "@/lib/modules";
 
@@ -46,9 +53,10 @@ function DatasetCard({ dataset, source }: { dataset: Dataset; source: Source | u
 
 /** Only counts of records that are really loaded, each with its source. */
 async function AvailableData() {
-  const [institutions, initiatives, sources] = await Promise.all([
+  const [institutions, initiatives, constitution, sources] = await Promise.all([
     fetchInstitutions({ limit: 1 }),
     fetchInitiatives({ limit: 1 }),
+    fetchInstrument(CONSTITUTION_SLUG),
     fetchSources(),
   ]);
 
@@ -62,6 +70,14 @@ async function AvailableData() {
   }
 
   const datasets: Dataset[] = [
+    {
+      sourceRef: "funcionpublica.gov.co:gestor-normativo:4125",
+      // Not loaded yet (the API answers "not found") counts as zero and is left out.
+      total: constitution.ok ? constitution.data.article_count : 0,
+      noun: "artículos de la Constitución Política",
+      href: "/constitucion",
+      linkLabel: "Leer la Constitución",
+    },
     {
       sourceRef: "datos.gov.co:kcxp-nxum",
       total: initiatives.data.total,
