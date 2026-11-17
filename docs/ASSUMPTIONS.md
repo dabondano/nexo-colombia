@@ -34,3 +34,8 @@
 - Assumption: educational content is drafted by the engineering lead and published only after review by a legally qualified person.
 - Reason: legal precision requirement · Impact if wrong: lessons could contain inaccuracies.
 - Owner/verification: owner names the reviewer (PRD open question 2).
+
+### Assumption A-008
+- Assumption: when the Cámara bills dataset publishes a Senate number with the text "No Aplica" inserted before, after and between every character, removing that text gives the number the source intended (for example "068/2012 S").
+- Reason: the pattern is exact in all 194 affected rows and every result has the form of a bill number; one case (Cámara 343/2013 C) was compared with the bill's page at camara.gov.co on 2026-11-17 and matched · Impact if wrong: a Senate number shown for some of those bills would be incorrect; the published value is kept in the raw record and the record page states that the number was reconstructed.
+- Owner/verification: data steward; sample more rows against camara.gov.co, and report the defect to the Cámara.

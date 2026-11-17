@@ -11,6 +11,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     SmallInteger,
     String,
@@ -91,12 +92,20 @@ class SourceRecord(Base):
     """The raw item a canonical record was derived from (brief section 5.5).
 
     Append-only: a changed item at the source creates a new row with a new
-    content hash; earlier rows are kept.
+    content hash; earlier rows are kept. The same content may appear again in
+    a later acquisition (a source can revert a change), but never twice in one.
     """
 
     __tablename__ = "source_record"
     __table_args__ = (
-        UniqueConstraint("source_id", "external_id", "content_hash"),
+        UniqueConstraint(
+            "source_id",
+            "external_id",
+            "content_hash",
+            "acquired_at",
+            name="uq_source_record_item_content_acquisition",
+        ),
+        Index("ix_source_record_source_external", "source_id", "external_id"),
         {"schema": CORE_SCHEMA},
     )
 
@@ -115,3 +124,19 @@ class SourceRecord(Base):
     # Only fields on the source's allow-list are stored (data minimization).
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
     processing_history: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+
+
+class SyncReject(Base):
+    """A source row that failed validation and was not published, with the reason."""
+
+    __tablename__ = "sync_reject"
+    __table_args__ = ({"schema": CORE_SCHEMA},)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=_uuid)
+    sync_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey(f"{CORE_SCHEMA}.sync_run.id"), index=True
+    )
+    external_id: Mapped[str | None] = mapped_column(String(300))
+    reason: Mapped[str] = mapped_column(Text)
+    # Only allow-listed fields, like source_record.payload.
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)

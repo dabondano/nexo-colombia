@@ -48,7 +48,7 @@ Common properties of datos.gov.co datasets: API endpoint `https://www.datos.gov.
 ### Source S-008: Proyectos de Ley (Cámara de Representantes)
 - ID `kcxp-nxum` · Rows: 6,606 · Data last updated: 2026-09-17 · Legislatures through 2026-2027 (302 rows for 2026-2027; 579 for 2025-2026)
 - Key fields: Cámara and Senado numbers and dates, title, purpose, type of law, authors, status, origin, commission, legislature, link to the Cámara page
-- Known limitations: free-text authors; placeholder rows exist (one row reads "FALLA EN EL APLICATIVO"); "No Aplica" used for missing values; no debate history or votes
+- Known limitations: free-text authors; placeholder rows exist (one row reads "FALLA EN EL APLICATIVO"); "No Aplica" used for missing values; no debate history or votes; in 194 rows the Senate number has "No Aplica" inserted between every character (see assumption A-008); the list number `no_` is a position, not a stable identifier, so the bill's page URL is used as its key
 - Verification status: Verified on 2026-11-17 by API
 
 ### Source S-009: Votaciones sesiones plenaria Senado

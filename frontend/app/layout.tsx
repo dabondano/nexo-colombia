@@ -13,6 +13,8 @@ export const metadata: Metadata = {
 
 const NAV = [
   { href: "/", label: "Inicio" },
+  { href: "/legislacion", label: "Legislación" },
+  { href: "/instituciones", label: "Instituciones" },
   { href: "/fuentes", label: "Fuentes" },
 ];
 
@@ -35,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </span>
             </Link>
             <nav aria-label="Navegación principal">
-              <ul className="flex gap-6 text-base">
+              <ul className="flex flex-wrap gap-x-6 gap-y-1 text-base">
                 {NAV.map((item) => (
                   <li key={item.href}>
                     <Link href={item.href} className="underline-offset-4 hover:underline">

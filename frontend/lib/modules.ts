@@ -6,7 +6,10 @@ export type NexoModule = {
   number: string;
   name: string;
   summary: string;
+  /** Stage of the module as a whole. */
   stage: Stage;
+  /** A first part of the module that already works with real data. */
+  available?: { label: string; href: string };
 };
 
 export const MODULES: NexoModule[] = [
@@ -23,6 +26,7 @@ export const MODULES: NexoModule[] = [
     summary:
       "Investigación de normas, proyectos de ley y jurisprudencia, con historial de trámite y citas verificables.",
     stage: "Diseñado",
+    available: { label: "Proyectos de ley de la Cámara", href: "/legislacion" },
   },
   {
     number: "03",
@@ -30,6 +34,7 @@ export const MODULES: NexoModule[] = [
     summary:
       "Directorio de entidades públicas y servidores, con cargos, períodos y relaciones documentadas.",
     stage: "Diseñado",
+    available: { label: "Directorio de entidades públicas", href: "/instituciones" },
   },
   {
     number: "04",
