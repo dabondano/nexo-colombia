@@ -1,0 +1,39 @@
+# Daily backup of the production database (Neon), kept as a workflow artifact
+# for 30 days. Artifacts are visible only to people with access to this private
+# repository; they contain staff e-mail addresses and password hashes.
+name: Database backup
+
+on:
+  schedule:
+    - cron: "30 7 * * *" # every day 07:30 UTC (02:30 in Bogotá)
+  workflow_dispatch:
+
+concurrency:
+  group: production-database
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Dump
+        env:
+          DATABASE_URL: ${{ secrets.NEXO_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL" || { echo "Set the NEXO_DATABASE_URL secret."; exit 1; }
+          # pg_dump accepts only plain postgresql:// URLs.
+          url="${DATABASE_URL/postgresql+psycopg:\/\//postgresql://}"
+          name="nexo-$(date -u +%Y%m%dT%H%M%SZ).dump"
+          # pg_dump 17 can read PostgreSQL 16 and 17 servers.
+          docker run --rm postgres:17 pg_dump --format=custom --no-owner "$url" > "$name"
+          test -s "$name"
+          echo "name=$name" >> "$GITHUB_ENV"
+          ls -l "$name"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.name }}
+          path: ${{ env.name }}
+          retention-days: 30
+          if-no-files-found: error
