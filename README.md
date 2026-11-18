@@ -38,6 +38,7 @@ uv run alembic upgrade head          # create the tables
 uv run python -m app.sources.registry  # register the verified sources
 uv run python -m app.ingestion.cli all # load entities, bills and the Constitution (about a minute)
 uv run python -m app.search.reindex    # only needed to rebuild the search index for existing data
+uv run python -m app.auth.cli create-admin you@example.org "Your name"  # first staff account; prints a one-time password
 uv run uvicorn app.main:app --reload   # http://localhost:8000/api/v1/docs
 
 # Checks

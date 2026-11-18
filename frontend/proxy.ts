@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { constitutionProvisionPath, recordExists, representativePath } from "@/lib/api";
 import { LESSONS } from "@/lib/lessons";
 
+// Same name as in lib/staff.ts, which is server-only and cannot be imported here.
+const SESSION_COOKIE = "nexo_sesion";
+
 /**
  * Answers HTTP 404 for record pages whose record does not exist.
  *
@@ -50,6 +53,13 @@ function notFoundResponse(request: NextRequest): NextResponse {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Optimistic check only: every panel page and the API verify the session again.
+  if (pathname === "/panel" || pathname.startsWith("/panel/")) {
+    return request.cookies.has(SESSION_COOKIE)
+      ? NextResponse.next()
+      : NextResponse.redirect(new URL("/ingresar", request.url));
+  }
+
   if (pathname.startsWith("/aprender/")) {
     const slug = safeDecode(pathname.slice("/aprender/".length));
     return slug !== null && LESSON_SLUGS.has(slug) ? NextResponse.next() : notFoundResponse(request);
@@ -68,5 +78,7 @@ export const config = {
     "/representantes/:id",
     "/constitucion/:clave",
     "/aprender/:leccion",
+    "/panel",
+    "/panel/:path*",
   ],
 };

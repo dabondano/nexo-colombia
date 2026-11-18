@@ -13,6 +13,8 @@ import sys
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.auth.models import Role, UserAccount
+from app.auth.security import hash_password
 from app.core.db import CORE_SCHEMA, SEARCH_SCHEMA, get_engine
 from app.ingestion.datasets import bills, constitution, entities, representatives
 from app.ingestion.pipeline import run_sync
@@ -23,11 +25,20 @@ from tests.samples import bill_row, entity_row, representative_row
 
 OPPOSITION_BASIS = "C.P. Art. 112 y Ley 1909 de 2018 Art. 24 (ejemplo)"
 
+# Sample staff accounts for the interface tests; the passwords exist only here.
+STAFF_PASSWORD = "clave-de-ejemplo-para-pruebas"  # noqa: S105 (sample data)
+STAFF = [
+    ("admin@nexo.example", "Administración de ejemplo", Role.ADMIN),
+    ("datos@nexo.example", "Gestión de datos de ejemplo", Role.DATA_STEWARD),
+    ("revision@nexo.example", "Revisión jurídica de ejemplo", Role.LEGAL_REVIEWER),
+]
+
 
 def seed(session: Session) -> None:
     session.execute(
         text(
             f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.initiative_author, "
+            f"{CORE_SCHEMA}.auth_session, {CORE_SCHEMA}.audit_event, {CORE_SCHEMA}.user_account, "
             f"{CORE_SCHEMA}.position_holding, {CORE_SCHEMA}.person, "
             f"{CORE_SCHEMA}.provision_version, {CORE_SCHEMA}.legal_provision, "
             f"{CORE_SCHEMA}.legal_instrument, {CORE_SCHEMA}.institution, "
@@ -73,6 +84,8 @@ def seed(session: Session) -> None:
                 "proyecto-de-ejemplo-1",
                 autores="H.R. Autora De Ejemplo, H.R. Autor De Prueba, y otras firmas",
             ),
+            # A placeholder row of the source system: rejected, so the panel lists a reject.
+            bill_row("fila-de-relleno", t_tulo="FALLA EN EL APLICATIVO"),
             bill_row(
                 "proyecto-de-ejemplo-2",
                 no_c_mara="002/2026C",
@@ -83,6 +96,17 @@ def seed(session: Session) -> None:
     )
     run_sync(session, constitution.SPEC, constitution.rows_from_html(page()))
     link_authors(session)
+    for email, name, role in STAFF:
+        session.add(
+            UserAccount(
+                email=email,
+                display_name=name,
+                role=role.value,
+                password_hash=hash_password(STAFF_PASSWORD),
+                must_change_password=False,
+            )
+        )
+    session.commit()
 
 
 if __name__ == "__main__":

@@ -250,7 +250,7 @@ export type ApiResult<T> =
 
 type Params = Record<string, string | number | undefined>;
 
-function apiBaseUrl(): string {
+export function apiBaseUrl(): string {
   return process.env.NEXO_API_URL ?? "http://localhost:8000";
 }
 

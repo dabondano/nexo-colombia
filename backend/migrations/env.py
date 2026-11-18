@@ -5,8 +5,10 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, text
 
-from app.catalog import models as _catalog_models  # noqa: F401  (registers tables)
+from app.auth import models as _auth_models  # noqa: F401  (registers tables)
+from app.catalog import models as _catalog_models  # noqa: F401
 from app.congress import models as _congress_models  # noqa: F401
+from app.core import audit as _audit_models  # noqa: F401
 from app.core.config import get_settings
 from app.core.db import CORE_SCHEMA, Base
 from app.law import models as _law_models  # noqa: F401

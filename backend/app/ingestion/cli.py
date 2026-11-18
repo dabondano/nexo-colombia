@@ -10,6 +10,7 @@ from collections.abc import Callable, Iterable
 
 from sqlalchemy.orm import Session
 
+from app.core import audit
 from app.core.db import get_engine
 from app.ingestion.datasets import bills, constitution, entities, representatives
 from app.ingestion.pipeline import DatasetSpec, Row, run_sync
@@ -44,6 +45,21 @@ def main(argv: list[str]) -> int:
         for name in names:
             spec, download = DATASETS[name]
             result = run_sync(session, spec, download())
+            audit.record(
+                session,
+                "sync_run",
+                target_type="sync_run",
+                target_id=str(result.sync_run_id),
+                details={
+                    "dataset": name,
+                    "via": "command_line",
+                    "seen": result.rows_seen,
+                    "new": result.rows_new,
+                    "changed": result.rows_changed,
+                    "rejected": result.rows_rejected,
+                },
+            )
+            session.commit()
             print(
                 f"{name}: vistos={result.rows_seen} nuevos={result.rows_new} "
                 f"modificados={result.rows_changed} sin_cambios={result.rows_unchanged} "

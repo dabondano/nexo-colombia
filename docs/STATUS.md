@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-18 (M4: representatives, bill authors, accessibility pass)
+Last updated: 2026-11-18 (M4: representatives, bill authors, accessibility pass, staff accounts)
 
 ## Completed work
 
@@ -40,6 +40,9 @@ Last updated: 2026-11-18 (M4: representatives, bill authors, accessibility pass)
 | Web pages "Constitución" (outline with edition note and review marks) and article page (wording, notes, earlier wording and struck words shown apart, warning, neighbours, provenance) | Implementado | Builds and lints; exercised in a browser against the loaded text (outline counts, articles 11, 12 and 231, preamble, missing article, search, phone width, no console errors); no automated UI tests yet |
 | First learning path "Aprender" (two lessons: how the State is organized, how a law is made; glossary and review questions), every statement labelled and linked to its articles | Implementado (draft) | Every one of the 38 links checked in a browser and resolving to the right article; **content not yet reviewed by a legally qualified person** (A-007) |
 | CI workflow (backend lint, types, tests; frontend lint, build; interface and accessibility tests) | Integrado | `.github/workflows/ci.yml`; runs on every pull request |
+| Staff accounts and sign-in (ADR-006): roles administrator, data steward and legal reviewer; Argon2id passwords; issued passwords must be changed at first sign-in; lockout after five failures; sessions of 12 hours (2 hours idle) revoked on sign-out, password or role change and deactivation; first administrator created with `python -m app.auth.cli create-admin` | Probado | `backend/tests/test_auth.py` (sign-in and out, identical answers for unknown and wrong accounts, lockout, idle expiry, permissions per role, issued passwords, last administrator kept); `frontend/e2e/staff.spec.ts` |
+| Append-only audit log (`core.audit_event`; the database rejects updates and deletes): sign-ins, failed sign-ins, sign-outs, password changes and resets, account creation and changes, data synchronizations | Probado | `test_auth.py`; panel page "Registro de auditoría" (administrators) |
+| Staff panel (`/ingresar`, `/panel`): accounts (administrators), synchronizations with their figures and the rejected rows with reasons and published content (data stewards), audit log (administrators), password change; not indexed by search engines | Implementado | `frontend/e2e/staff.spec.ts`, including axe-core checks of the panel pages; no data is changed from the panel except accounts |
 | Automated interface tests (Playwright) of the core flows: header search to a record and its origin, directory filters and paging, bill to author and back, Constitution outline to an article and its neighbours, 404 for unknown records, skip link, visible focus on the header, current section in the navigation | Probado | `frontend/e2e/flows.spec.ts`; desktop and phone sizes; run against invented sample data (`backend/tests/seed_ui.py`) |
 | Accessibility pass, WCAG 2.2 AA (automatic part): axe-core on 16 page types (home, search with and without results, the three directories, a record of each, Constitution outline and article, learning path and a lesson, sources, not-found) at desktop and phone sizes, plus failed requests and console errors | Probado | `frontend/e2e/a11y.spec.ts`: no violations. Manual checks on 2026-11-18: keyboard order and visible focus, reflow at 320 px without horizontal scrolling on four page types. Fixed: focus ring on the dark header was 2.0:1 against its background (now 7.1:1, WCAG 1.4.11); the skip link now moves focus into the content (`main` focusable); the navigation marks the current section (`aria-current`); favicon added |
 | Docker Compose stack and API image | Implementado | Written but **not run**: on 2026-11-17 no Docker daemon was available; on 2026-11-18 the daemon ran but Docker Hub was not reachable from the workspace, so the `python` and `postgres` images could not be pulled |
@@ -56,13 +59,13 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 
 - Links between records beyond bill authors (for example from a bill to an entity); needs reliable identifiers.
 - Search improvements for a later phase: related words and synonyms (semantic search, Phase 4), highlighted excerpts, date-range controls in the page (the API already accepts them).
-- Scheduled synchronization (today the load is started by hand) and a sync dashboard for data stewards.
+- Scheduled synchronization (today the load is started by hand from the command line; the panel shows the results).
 - Bill authors who are senators or other officials stay as text: no reliable Senate member dataset yet (S-023). Bills filed before 20 July 2026 are not linked.
 - Inspect the owner's local `prototipo` folder if it contains earlier work (access not granted yet).
 - Legal review of the learning path and of the Constitution explorer (A-007, A-009, A-010); name the reviewer.
 - Transitory provisions of the Constitution; laws and decrees; links from a bill to the norm it would change.
 - Compare the Constitution with a consolidated source with validity dates (SUIN-Juriscol) once it answers.
-- Authentication, roles and audit log (M4). Accessibility: a screen-reader review (NVDA or VoiceOver) and a review by people who use assistive technology are still pending; automatic checks find only part of the problems.
+- Legal reviewers can sign in but have no review workflow yet (recording a review of a lesson or of the Constitution explorer, A-007). Accessibility: a screen-reader review (NVDA or VoiceOver) and a review by people who use assistive technology are still pending; automatic checks find only part of the problems.
 - Phase 1 items not yet produced: full user-journey diagrams and detailed ER diagrams per module.
 
 ## Known issues
@@ -76,6 +79,7 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 - Bill status is the one published in the dataset (last updated by the source on 2026-09-17) and may lag behind actual proceedings.
 - Search matches words and their plurals only: "educación" does not find "educativo". Results are ordered by text match alone.
 - A database that already holds records must rebuild its search index once after this version is installed (`python -m app.search.reindex`), so that title matches are listed first; new loads index records as they are published.
+- Sign-in has per-account lockout but no per-IP rate limit: the API only sees the web server's address. Add a limit at the reverse proxy when hosting is chosen (ADR-006). Expired sessions are not yet purged from `core.auth_session`. In production the application's database role should not be allowed to truncate `core.audit_event`.
 - Record pages for unknown identifiers now answer 404 (fixed 2026-11-18). Each record page request costs one extra lightweight HEAD request to the API. When the API is unreachable the check lets the request through, so the page shows its connection notice with status 200.
 
 ## Architectural decisions
