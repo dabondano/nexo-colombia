@@ -153,8 +153,9 @@ jobs:
           test "$(code https://localhost/presupuesto/00-00-00)" = 404
           test "$(code https://localhost/representantes/00000000-0000-0000-0000-000000000000)" = 404
           test "$(code http://localhost/)" = 308
-          curl -sk -D - -o /dev/null https://localhost/ | grep -qi '^strict-transport-security:'
-          ! curl -sk -D - -o /dev/null https://localhost/ | grep -qi '^server:'
+          headers=$(curl -sk -D - -o /dev/null https://localhost/)
+          echo "$headers" | grep -qi '^strict-transport-security:'
+          ! echo "$headers" | grep -qi '^server:'
           location=$(curl -sk -o /dev/null -w '%{redirect_url}' https://localhost/panel)
           test "$location" = "https://localhost/ingresar"
           # The API and the database are not published.
