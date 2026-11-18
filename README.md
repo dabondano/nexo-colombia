@@ -50,6 +50,8 @@ pnpm install
 pnpm dev                             # http://localhost:3000
 ```
 
+Interface and accessibility tests (Playwright and axe-core) run against invented sample data: see [frontend/e2e/README.md](frontend/e2e/README.md).
+
 ## Documentation
 
 | Document | Content |

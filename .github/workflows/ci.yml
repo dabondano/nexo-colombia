@@ -59,3 +59,68 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm build
+
+  # Web interface and accessibility tests against invented sample data.
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexo
+          POSTGRES_PASSWORD: nexo
+          POSTGRES_DB: nexo_ui
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexo -d nexo_ui"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      NEXO_DATABASE_URL: postgresql+psycopg://nexo:nexo@localhost:5432/nexo_ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: API with sample data
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          uv run alembic upgrade head
+          uv run python -m tests.seed_ui
+          nohup uv run uvicorn app.main:app --port 8000 > ../api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:8000/api/v1/health/ready && break; sleep 1; done
+      - name: Web application
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          nohup pnpm start -p 3000 > ../web.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 1; done
+      - name: Browser
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Interface and accessibility tests
+        working-directory: frontend
+        run: pnpm test:e2e
+      - name: Logs and report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            api.log
+            web.log
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7

@@ -10,6 +10,8 @@
   --brand: #12395b;
   --brand-ink: #ffffff;
   --accent: #8a5a00;
+  /* Focus ring on the dark brand background: 7.1:1 against --brand (WCAG 1.4.11 needs 3:1). */
+  --focus-on-brand: #f2c14e;
   --ok: #1d6b3a;
   --warn: #8a4b00;
 }
@@ -38,4 +40,9 @@ body {
 :focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* --accent is only 2.0:1 against --brand, too faint for a focus ring there. */
+.bg-brand :focus-visible {
+  outline-color: var(--focus-on-brand);
 }
