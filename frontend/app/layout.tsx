@@ -16,6 +16,7 @@ const NAV = [
   { href: "/aprender", label: "Aprender" },
   { href: "/constitucion", label: "Constitución" },
   { href: "/legislacion", label: "Legislación" },
+  { href: "/representantes", label: "Representantes" },
   { href: "/instituciones", label: "Instituciones" },
   { href: "/fuentes", label: "Fuentes" },
 ];

@@ -64,3 +64,22 @@ def bill_row(slug: str = "proyecto-de-ejemplo-1", **overrides: Any) -> Row:
     }
     row.update(overrides)
     return row
+
+
+def representative_row(
+    name: str = "Autora De Ejemplo",
+    email: str = "autora.ejemplo@camara.gov.co",
+    **overrides: Any,
+) -> Row:
+    """A row in the shifted layout of the real dataset: each column holds the next one's value."""
+    row: Row = {
+        ":id": f"row-{email}",
+        ":updated_at": "2026-11-11T15:00:00.000Z",
+        "_": name,
+        "apelidos_y_nombre": "BOYACÁ",
+        "partido_o_movimiento": "Partido De Ejemplo",
+        "circunscripcion": email,
+        "comision_const": "000B - Edificio de ejemplo",
+    }
+    row.update(overrides)
+    return row

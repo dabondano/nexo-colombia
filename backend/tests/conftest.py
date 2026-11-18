@@ -57,6 +57,8 @@ def session() -> Iterator[Session]:
                 f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.provision_version, "
                 f"{CORE_SCHEMA}.legal_provision, {CORE_SCHEMA}.legal_instrument, "
                 f"{CORE_SCHEMA}.institution, {CORE_SCHEMA}.legislative_initiative, "
+                f"{CORE_SCHEMA}.initiative_author, {CORE_SCHEMA}.position_holding, "
+                f"{CORE_SCHEMA}.person, "
                 f"{CORE_SCHEMA}.sync_reject, {CORE_SCHEMA}.source_record, "
                 f"{CORE_SCHEMA}.sync_run, {CORE_SCHEMA}.source CASCADE"
             )

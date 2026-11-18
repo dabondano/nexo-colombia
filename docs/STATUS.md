@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-18 (after M3, reproduction check and 404 fix)
+Last updated: 2026-11-18 (M4 started: representatives and bill authors)
 
 ## Completed work
 
@@ -42,16 +42,20 @@ Last updated: 2026-11-18 (after M3, reproduction check and 404 fix)
 | CI workflow (backend lint, types, tests; frontend lint, build) | Integrado | `.github/workflows/ci.yml`; runs on every pull request |
 | Docker Compose stack and API image | Implementado | Written but **not run**: on 2026-11-17 no Docker daemon was available; on 2026-11-18 the daemon ran but Docker Hub was not reachable from the workspace, so the `python` and `postgres` images could not be pulled |
 | Reproduction from a clean workspace (2026-11-18) | Probado | Fresh clone, empty PostgreSQL 16: migrations, source registry, `python -m app.ingestion.cli all` from the live sources (entities 6,404 loaded, 0 rejected; bills 6,605 loaded, 1 rejected; Constitution 448 rows, 0 rejected), `python -m app.search.reindex` (13,393 documents), 77 backend tests, lint, types, frontend lint and build: all identical to the M3 figures |
+| Representatives (Cámara, período 2026-2027) loaded into `core.person` and `core.position_holding`, with the shifted columns of the source reassigned by content (A-011) | Integrado (development database only) | Run of 2026-11-18: 362 rows seen, 181 loaded, 181 rejected as the second row of a member (kept in `core.sync_reject`); `backend/tests/test_representatives.py` |
+| Links from bills to their authors among the representatives (`core.initiative_author`), exact name match only, bills filed from 2026-07-20 (A-012) | Integrado (development database only) | 302 bills, 2,325 author names, 1,753 links, 0 ambiguous; rebuilt by `python -m app.ingestion.cli all` or `python -m app.legislation.authors`; tests in `test_representatives.py` |
+| Representatives API (`/api/v1/representatives`, filters, detail with contact, provenance and linked bills) and representatives in the unified search | Probado | `backend/tests/test_representatives.py` |
+| Web pages "Representantes" (directory with name, constituency and party filters) and representative page (Cámara data, institutional contact, linked bills labelled "Hipótesis analítica", provenance with the column note); bill pages list linked authors | Implementado | Builds and lints; checked in a headless browser against the real data at desktop and phone widths; unknown representatives answer 404; no automated UI tests yet |
 | Record pages answer HTTP 404 for unknown records | Probado | `frontend/proxy.ts` asks the API with a HEAD request (new HEAD routes on the institution, initiative and provision detail endpoints, covered in `test_records_api.py` and `test_constitution.py`) before the page renders; unknown lessons answer 404 from the lesson list. Checked against the loaded data: existing records 200, unknown or malformed identifiers 404 with `noindex`, client navigation 404; if the API is down the page still renders and says so (200) |
 
 Module status: **Legislación**, **Instituciones** and **Observatorio** each have a first working part (Constitution explorer and bill registry; entity directory; unified search over all three). **Academia** has a first draft learning path awaiting legal review. Every other part of those modules, and the modules Recursos Públicos and Análisis Político, remain **Diseñado**. Nothing is deployed: the data above exists only in the development database of the build workspace and must be loaded again wherever the platform is installed (`python -m app.ingestion.cli all`, about one minute).
 
 ## Pending tasks
 
-- Links between records (for example from a bill to its authors or to an entity); needs reliable identifiers.
+- Links between records beyond bill authors (for example from a bill to an entity); needs reliable identifiers.
 - Search improvements for a later phase: related words and synonyms (semantic search, Phase 4), highlighted excerpts, date-range controls in the page (the API already accepts them).
 - Scheduled synchronization (today the load is started by hand) and a sync dashboard for data stewards.
-- Link bill authors (free text in the source) to person records; needs a reliable member dataset (M4).
+- Bill authors who are senators or other officials stay as text: no reliable Senate member dataset yet (S-023). Bills filed before 20 July 2026 are not linked.
 - Inspect the owner's local `prototipo` folder if it contains earlier work (access not granted yet).
 - Legal review of the learning path and of the Constitution explorer (A-007, A-009, A-010); name the reviewer.
 - Transitory provisions of the Constitution; laws and decrees; links from a bill to the norm it would change.
@@ -64,7 +68,9 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 - SUIN-Juriscol gives an empty response (from the workspace and from a regular browser); Secretaría del Senado resets connections. Función Pública omits an intermediate certificate; NEXO supplies it (`backend/app/law/certs/README.md`).
 - The Constitution edition loaded is informative, mentions reforms up to Acto Legislativo 01 de 2025, and its currency after that has not been checked. Pages say so.
 - Hosts not yet allowed: Rama Judicial, Consejo de Estado, Corte Suprema, Registraduría, Imprenta Nacional, Portal de Transparencia Económica.
-- Cámara "Representantes 2026-2027" dataset has misaligned columns.
+- Cámara "Representantes 2026-2027" dataset has misaligned columns and two rows per member; NEXO reassigns the columns and lists the second row of each member among the run's rejects (A-011). Each full load therefore reports 181 rejects.
+- Author links use exact names: "Esneyder Gómez" (10 bills) is probably the representative Esneyder Gómez Salamanca but is not linked (A-012).
+- The site has no favicon, so browsers log a 404 for `/favicon.ico`.
 - Cámara "Proyectos de Ley": in 194 rows the Senate number is published with the text "No Aplica" inserted between every character. NEXO reconstructs the number only when the pattern is exact and the result looks like a bill number, keeps the published value in the raw record, and shows a note on the record page (assumption A-008). One reconstructed value was compared with the bill's page at camara.gov.co and matched; the other 193 were not checked individually.
 - Bill status is the one published in the dataset (last updated by the source on 2026-09-17) and may lag behind actual proceedings.
 - Search matches words and their plurals only: "educación" does not find "educativo". Results are ordered by text match alone.

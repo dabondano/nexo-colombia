@@ -10,6 +10,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.catalog.models import Institution
+from app.congress.models import Person, PositionHolding
 from app.core.db import get_engine
 from app.law.models import LegalInstrument, LegalProvision, ProvisionVersion
 from app.legislation.models import LegislativeInitiative
@@ -18,6 +19,7 @@ from app.search.indexing import (
     initiative_entry,
     institution_entry,
     provision_entry,
+    representative_entry,
 )
 from app.search.models import SearchDocument
 
@@ -31,6 +33,10 @@ def reindex(session: Session) -> int:
         count += 1
     for initiative in session.scalars(select(LegislativeInitiative)).yield_per(1000):
         index_entry(session, initiative_entry(initiative))
+        count += 1
+    holdings = select(PositionHolding, Person).join(Person, Person.id == PositionHolding.person_id)
+    for holding, person in session.execute(holdings).yield_per(1000):
+        index_entry(session, representative_entry(holding, person))
         count += 1
     provisions = (
         select(LegalProvision, LegalInstrument, ProvisionVersion.text)

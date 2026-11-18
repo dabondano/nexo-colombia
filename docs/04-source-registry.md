@@ -59,9 +59,9 @@ Common properties of datos.gov.co datasets: API endpoint `https://www.datos.gov.
 
 ### Source S-010: Representantes período 2026-2027
 - Institution: Cámara de Representantes · ID `5pt5-nxdp` · Rows: 362 · Data last updated: 2026-11-11
-- Known limitations: column names do not match contents (for example the column named "circunscripcion" holds e-mail addresses and "partido_o_movimiento" holds either a party or a legal citation); row count exceeds the number of representatives, so it likely includes sub-rows; needs manual mapping and validation
-- Access restrictions: institutional e-mail and phone extensions present
-- Verification status: Verified on 2026-11-17 by API (structure only)
+- Known limitations: every column holds the value of the next column's name ("_" holds the name, "apelidos_y_nombre" the constituency, "partido_o_movimiento" the party or, for the opposition seat, its legal basis, "circunscripcion" the e-mail, "comision_const" the office, "comision_legal" the phone). Each of the 181 members appears in two rows; the second usually adds the office. No commissions and no dates of taking office
+- Access restrictions: institutional e-mail, office and phone extensions present; shown as institutional contact (owner decision of 2026-11-18)
+- Verification status: Verified on 2026-11-17 by API (structure only); all 362 rows profiled on 2026-11-18 and loaded with the mapping above (see `backend/app/ingestion/datasets/representatives.py`)
 
 ### Source S-011: Other datasets found, not yet inspected in detail
 - `feim-cysj` Proyectos de ley del Senado (2,274 rows; stale since 2023-12-07)

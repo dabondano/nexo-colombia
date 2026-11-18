@@ -32,6 +32,11 @@ const TYPES: Record<RecordType, { singular: string; plural: string; path: string
     plural: "Iniciativas legislativas",
     path: "/legislacion",
   },
+  representative: {
+    singular: "Representante a la Cámara",
+    plural: "Representantes a la Cámara",
+    path: "/representantes",
+  },
   institution: { singular: "Entidad pública", plural: "Entidades públicas", path: "/instituciones" },
 };
 

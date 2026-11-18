@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.congress.models import InitiativeAuthor, Person, PositionHolding
+from app.congress.schemas import LinkedAuthor
 from app.core.db import get_session
 from app.core.listing import (
     DEFAULT_LIMIT,
@@ -19,6 +21,7 @@ from app.core.listing import (
     filter_options,
 )
 from app.core.provenance import load_provenance
+from app.legislation.authors import AUTHOR_RULE
 from app.legislation.models import LegislativeInitiative
 from app.legislation.schemas import (
     InitiativeFilters,
@@ -116,6 +119,17 @@ def get_initiative(initiative_id: uuid.UUID, session: SessionDep) -> InitiativeO
         purpose=initiative.purpose,
         observations=initiative.observations,
         authors_text=initiative.authors_text,
+        linked_authors=[
+            LinkedAuthor(representative_id=holding_id, full_name=full_name, author_name=name)
+            for holding_id, full_name, name in session.execute(
+                select(PositionHolding.id, Person.full_name, InitiativeAuthor.author_name)
+                .join(Person, Person.id == InitiativeAuthor.person_id)
+                .join(PositionHolding, PositionHolding.person_id == Person.id)
+                .where(InitiativeAuthor.initiative_id == initiative.id)
+                .order_by(InitiativeAuthor.created_at, Person.name_normalized)
+            )
+        ],
+        linked_authors_rule=AUTHOR_RULE,
         jurisdiction_code=initiative.jurisdiction_code,
         provenance=load_provenance(session, initiative.source_record_id),
     )
