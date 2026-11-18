@@ -18,7 +18,7 @@ def test_audit_model_resolves_without_the_api() -> None:
         "configure_mappers()\n"
         "[fk.column for fk in AuditEvent.__table__.foreign_keys]\n"
     )
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603 (fixed command, test only)
         [sys.executable, "-c", code], cwd=BACKEND_DIR, capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stderr
