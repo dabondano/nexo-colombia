@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -78,6 +78,13 @@ def institution_filters(session: SessionDep) -> InstitutionFilters:
         sector=filter_options(session, Institution.sector),
         department=filter_options(session, Institution.department),
     )
+
+
+@router.head("/{institution_id}", include_in_schema=False)
+def institution_exists(institution_id: uuid.UUID, session: SessionDep) -> Response:
+    """Existence check without the record body, used by the web app to answer 404 early."""
+    found = session.scalar(select(Institution.id).where(Institution.id == institution_id))
+    return Response(status_code=200 if found else 404)
 
 
 @router.get("/{institution_id}", response_model=InstitutionOut)

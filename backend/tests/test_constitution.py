@@ -242,8 +242,13 @@ def test_api_provision(client: TestClient, session: Session, loaded: None) -> No
     assert by_path.json()["next"]["path"] == "articulo-12-a"
     no_path = client.get(f"{API}/instruments/constitucion-politica-1991/provisions/articulo-999")
     assert no_path.status_code == 404
+    head_url = f"{API}/instruments/constitucion-politica-1991/provisions"
+    assert client.head(f"{head_url}/articulo-12").status_code == 200
+    assert client.head(f"{head_url}/articulo-999").status_code == 404
     missing = "00000000-0000-0000-0000-000000000000"
     assert client.get(f"{API}/provisions/{missing}").status_code == 404
+    assert client.head(f"{API}/provisions/{missing}").status_code == 404
+    assert client.head(f"{API}/provisions/{body['id']}").status_code == 200
 
 
 def test_search_finds_articles_by_number_and_by_wording(
