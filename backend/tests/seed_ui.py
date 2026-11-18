@@ -16,12 +16,12 @@ from sqlalchemy.orm import Session
 from app.auth.models import Role, UserAccount
 from app.auth.security import hash_password
 from app.core.db import CORE_SCHEMA, SEARCH_SCHEMA, get_engine
-from app.ingestion.datasets import bills, constitution, entities, representatives
+from app.ingestion.datasets import bills, budget, constitution, entities, representatives
 from app.ingestion.pipeline import run_sync
 from app.legislation.authors import link_authors
 from app.sources.registry import seed_registry
 from tests.constitution_page import page
-from tests.samples import bill_row, entity_row, representative_row
+from tests.samples import bill_row, budget_row, entity_row, representative_row
 
 OPPOSITION_BASIS = "C.P. Art. 112 y Ley 1909 de 2018 Art. 24 (ejemplo)"
 
@@ -39,6 +39,7 @@ def seed(session: Session) -> None:
         text(
             f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.initiative_author, "
             f"{CORE_SCHEMA}.content_review, {CORE_SCHEMA}.auth_session, {CORE_SCHEMA}.audit_event, "
+            f"{CORE_SCHEMA}.budget_execution, "
             f"{CORE_SCHEMA}.user_account, "
             f"{CORE_SCHEMA}.position_holding, {CORE_SCHEMA}.person, "
             f"{CORE_SCHEMA}.provision_version, {CORE_SCHEMA}.legal_provision, "
@@ -96,6 +97,17 @@ def seed(session: Session) -> None:
         ],
     )
     run_sync(session, constitution.SPEC, constitution.rows_from_html(page()))
+    run_sync(
+        session,
+        budget.SPEC,
+        [
+            budget_row(),
+            budget_row(recurso_presupuestal="DONACIONES", situacion_de_fondos="SSF"),
+            budget_row(
+                "98-01-00", nombre_entidad="MINISTERIO DE EJEMPLO", nombre_del_sector="OTRO SECTOR"
+            ),
+        ],
+    )
     link_authors(session)
     for email, name, role in STAFF:
         session.add(

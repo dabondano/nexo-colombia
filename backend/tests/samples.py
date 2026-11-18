@@ -83,3 +83,25 @@ def representative_row(
     }
     row.update(overrides)
     return row
+
+
+def budget_row(code: str = "99-01-00", **overrides: Any) -> Row:
+    row: Row = {
+        ":id": f"row-{code}-{overrides.get('recurso_presupuestal', 'RECURSOS CORRIENTES')}",
+        ":updated_at": "2026-11-07T18:52:34.078Z",
+        "fuente_de_financiaci_n": "Nación",
+        "situacion_de_fondos": "CSF",
+        "recurso_presupuestal": "RECURSOS CORRIENTES",
+        "codigo_del_sector": "99",
+        "nombre_del_sector": "SECTOR DE EJEMPLO",
+        "codigo_entidad": code,
+        "nombre_entidad": "AGENCIA DE EJEMPLO",
+        "apropiaci_n_vigente": "1000000",
+        "compromisos": "800000",
+        # Not on the allow-list: never stored.
+        "obligations_ignored": "x",
+        "obligaciones": "500000",
+        "pagos": "400000",
+    }
+    row.update(overrides)
+    return row

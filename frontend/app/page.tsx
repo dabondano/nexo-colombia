@@ -7,6 +7,7 @@ import {
   fetchInitiatives,
   fetchInstitutions,
   fetchRepresentatives,
+  fetchBudgetEntities,
   fetchInstrument,
   fetchSources,
   type Source,
@@ -54,10 +55,11 @@ function DatasetCard({ dataset, source }: { dataset: Dataset; source: Source | u
 
 /** Only counts of records that are really loaded, each with its source. */
 async function AvailableData() {
-  const [institutions, initiatives, representatives, constitution, sources] = await Promise.all([
+  const [institutions, initiatives, representatives, budget, constitution, sources] = await Promise.all([
     fetchInstitutions({ limit: 1 }),
     fetchInitiatives({ limit: 1 }),
     fetchRepresentatives({ limit: 1 }),
+    fetchBudgetEntities({ limit: 1 }),
     fetchInstrument(CONSTITUTION_SLUG),
     fetchSources(),
   ]);
@@ -93,6 +95,13 @@ async function AvailableData() {
       noun: "representantes a la Cámara del período 2026-2027",
       href: "/representantes",
       linkLabel: "Ver los representantes",
+    },
+    {
+      sourceRef: "datos.gov.co:xjxk-qhsc",
+      total: budget.ok ? budget.data.total : 0,
+      noun: "entidades con datos de ejecución presupuestal",
+      href: "/presupuesto",
+      linkLabel: "Ver el presupuesto",
     },
     {
       sourceRef: "datos.gov.co:h7zv-k39x",

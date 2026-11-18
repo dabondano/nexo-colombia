@@ -316,6 +316,66 @@ export const fetchRepresentativeFilters = () =>
 export const representativePath = (id: string) => `/representatives/${encodeURIComponent(id)}`;
 export const fetchRepresentative = (id: string) => getJson<Representative>(representativePath(id));
 
+export type BudgetAmounts = {
+  appropriation: string;
+  commitments: string;
+  obligations: string;
+  payments: string;
+};
+export type BudgetRates = {
+  commitments: string | null;
+  obligations: string | null;
+  payments: string | null;
+};
+export type SectorTotal = {
+  sector_name: string | null;
+  entity_count: number;
+  amounts: BudgetAmounts;
+  rates: BudgetRates;
+};
+export type BudgetSummary = {
+  entity_count: number;
+  row_count: number;
+  amounts: BudgetAmounts;
+  rates: BudgetRates;
+  source_updated_at: string | null;
+  sectors: SectorTotal[];
+  rate_formula: string;
+  year_note: string;
+};
+export type EntityBudget = {
+  entity_code: string;
+  entity_name: string;
+  sector_name: string | null;
+  amounts: BudgetAmounts;
+  rates: BudgetRates;
+};
+export type BudgetLine = {
+  funding_source: string | null;
+  funds_situation: string | null;
+  budget_resource: string | null;
+  amounts: BudgetAmounts;
+  rates: BudgetRates;
+  data_quality_status: string;
+};
+export type EntityBudgetDetail = EntityBudget & {
+  sector_code: string | null;
+  lines: BudgetLine[];
+  data_quality_status: string;
+  epistemic_label: string;
+  provenance: Provenance;
+  rate_formula: string;
+  year_note: string;
+};
+
+export const fetchBudgetSummary = () => getJson<BudgetSummary>("/budget/summary");
+export const fetchBudgetFilters = () => getJson<{ sector: FilterOption[] }>("/budget/filters");
+export const fetchBudgetEntities = (params: Params) =>
+  getJson<Page<EntityBudget>>("/budget/entities", params);
+export const budgetEntityPath = (code: string) => `/budget/entities/${encodeURIComponent(code)}`;
+export const fetchBudgetEntity = (code: string) =>
+  getJson<EntityBudgetDetail>(budgetEntityPath(code));
+
 export type ReviewContentType = "lesson" | "constitution_provision";
 
 export type PublicReview = {

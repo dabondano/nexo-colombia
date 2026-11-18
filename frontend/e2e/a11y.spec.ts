@@ -33,6 +33,8 @@ const STATIC_PAGES = [
   "/aprender",
   "/aprender/estructura-del-estado",
   "/fuentes",
+  "/presupuesto",
+  "/presupuesto/99-01-00",
   "/no-existe",
 ];
 

@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-18 (M4: representatives, bill authors, accessibility pass, staff accounts, legal review)
+Last updated: 2026-11-18 (M4: representatives, bill authors, accessibility pass, staff accounts, legal review, budget execution)
 
 ## Completed work
 
@@ -45,6 +45,9 @@ Last updated: 2026-11-18 (M4: representatives, bill authors, accessibility pass,
 | Staff panel (`/ingresar`, `/panel`): accounts (administrators), synchronizations with their figures and the rejected rows with reasons and published content (data stewards), audit log (administrators), password change; not indexed by search engines | Implementado | `frontend/e2e/staff.spec.ts`, including axe-core checks of the panel pages; no data is changed from the panel except accounts |
 | Legal review workflow (A-007): legal reviewers (and administrators) approve or request changes on each lesson and on each article of the Constitution, with internal notes; each review is pinned to a fingerprint of exactly what was reviewed (a lesson's SHA-256, an article's current wording version), so an edit or a new wording makes the content pending again; history kept, never edited | Probado | `backend/tests/test_reviews.py`; `frontend/e2e/staff.spec.ts` (approve a lesson and see it on the public page; request changes on an article without the note becoming public) |
 | Public review status: the learning path and each lesson say "Revisado por el equipo de revisión jurídica de NEXO el …" only for approved current content, "cambió después de su última revisión" when it was edited since, and the draft notice otherwise; an article shows a review note only when its current wording was approved. Reviewer names and notes are never public | Implementado | Same tests; pages fall back to the draft notice while the status loads or if the API is unavailable |
+| National budget execution (MinHacienda, S-005 `xjxk-qhsc`) loaded into `core.budget_execution` | Integrado (development database only) | Run of 2026-11-18: 600 rows seen, 600 loaded, 0 rejected; 221 entities; total appropriation $543,188,100,676,463, commitments 79.47 %, payments 69.87 %; `backend/tests/test_budget.py` |
+| Budget API (`/api/v1/budget/summary`, `/filters`, `/entities`, `/entities/{code}`) with rates computed from the published figures and the formula stated; alphabetical, no rankings (A-013) | Probado | `backend/tests/test_budget.py` |
+| Web pages "Presupuesto" (totals, totals by sector, entity directory with search and sector filter) and entity page (amounts, rates, lines by funding source and resource, provenance); both state that the source gives no fiscal year or cut-off date | Implementado | Checked with the real data at desktop and phone widths; `frontend/e2e` (flow, axe-core, 404) |
 | Automated interface tests (Playwright) of the core flows: header search to a record and its origin, directory filters and paging, bill to author and back, Constitution outline to an article and its neighbours, 404 for unknown records, skip link, visible focus on the header, current section in the navigation | Probado | `frontend/e2e/flows.spec.ts`; desktop and phone sizes; run against invented sample data (`backend/tests/seed_ui.py`) |
 | Accessibility pass, WCAG 2.2 AA (automatic part): axe-core on 16 page types (home, search with and without results, the three directories, a record of each, Constitution outline and article, learning path and a lesson, sources, not-found) at desktop and phone sizes, plus failed requests and console errors | Probado | `frontend/e2e/a11y.spec.ts`: no violations. Manual checks on 2026-11-18: keyboard order and visible focus, reflow at 320 px without horizontal scrolling on four page types. Fixed: focus ring on the dark header was 2.0:1 against its background (now 7.1:1, WCAG 1.4.11); the skip link now moves focus into the content (`main` focusable); the navigation marks the current section (`aria-current`); favicon added |
 | Docker Compose stack and API image | Implementado | Written but **not run**: on 2026-11-17 no Docker daemon was available; on 2026-11-18 the daemon ran but Docker Hub was not reachable from the workspace, so the `python` and `postgres` images could not be pulled |
@@ -61,7 +64,8 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 
 - Links between records beyond bill authors (for example from a bill to an entity); needs reliable identifiers.
 - Search improvements for a later phase: related words and synonyms (semantic search, Phase 4), highlighted excerpts, date-range controls in the page (the API already accepts them).
-- Scheduled synchronization (today the load is started by hand from the command line; the panel shows the results).
+- Scheduled synchronization (today the load is started by hand from the command line; the panel shows the results). Budget figures are monthly snapshots: earlier months stay only in the raw layer, with no page to compare them yet.
+- Budget entities are not yet linked to the institutions directory (different codes; would need a matching rule like A-012) and are not in the unified search.
 - Bill authors who are senators or other officials stay as text: no reliable Senate member dataset yet (S-023). Bills filed before 20 July 2026 are not linked.
 - Inspect the owner's local `prototipo` folder if it contains earlier work (access not granted yet).
 - Legal review of the learning path and of the Constitution explorer (A-007, A-009, A-010); name the reviewer.

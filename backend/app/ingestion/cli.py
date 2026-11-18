@@ -1,6 +1,6 @@
 """Run a dataset synchronization.
 
-Usage:  python -m app.ingestion.cli entities|bills|representatives|constitution|all
+Usage:  python -m app.ingestion.cli entities|bills|representatives|budget|constitution|all
 
 `all` also rebuilds the links from bills to their authors (app/legislation/authors.py).
 """
@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core import audit
 from app.core.db import get_engine
-from app.ingestion.datasets import bills, constitution, entities, representatives
+from app.ingestion.datasets import bills, budget, constitution, entities, representatives
 from app.ingestion.pipeline import DatasetSpec, Row, run_sync
 from app.ingestion.socrata import SocrataClient
 from app.legislation.authors import link_authors
@@ -31,6 +31,7 @@ DATASETS: dict[str, tuple[DatasetSpec, Callable[[], Iterable[Row]]]] = {
         representatives.SPEC,
         lambda: representatives.order_rows(SocrataClient().iter_rows(representatives.DATASET_ID)),
     ),
+    "budget": (budget.SPEC, _socrata(budget.DATASET_ID)),
     "constitution": (constitution.SPEC, constitution.fetch_rows),
 }
 

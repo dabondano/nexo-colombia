@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { ScrollRegion } from "@/components/ScrollRegion";
 import { fetchSources, type Source } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -67,7 +68,7 @@ async function SourceList() {
   }
 
   return (
-    <div className="overflow-x-auto rounded border border-rule bg-surface p-5">
+    <ScrollRegion label="Tabla de fuentes" className="rounded border border-rule bg-surface p-5">
       <table className="w-full text-sm">
         <caption className="sr-only">Fuentes de información registradas</caption>
         <thead>
@@ -84,7 +85,7 @@ async function SourceList() {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

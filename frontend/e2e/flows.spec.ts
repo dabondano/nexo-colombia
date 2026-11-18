@@ -49,6 +49,7 @@ test("los registros que no existen responden 404", async ({ request }) => {
     `/instituciones/${missing}`,
     `/legislacion/${missing}`,
     `/representantes/${missing}`,
+    "/presupuesto/00-00-00",
     "/constitucion/articulo-999",
     "/aprender/no-existe",
     "/no-existe",
@@ -84,4 +85,15 @@ test("la navegación marca la sección actual", async ({ page }) => {
   const nav = page.getByRole("navigation", { name: "Navegación principal" });
   await expect(nav.getByRole("link", { name: "Representantes" })).toHaveAttribute("aria-current", "page");
   await expect(nav.getByRole("link", { name: "Inicio" })).not.toHaveAttribute("aria-current", "page");
+});
+
+test("el presupuesto: del total a una entidad, con la nota sobre la vigencia", async ({ page }) => {
+  await page.goto("/presupuesto");
+  await expect(page.getByText("La fuente no indica la vigencia").first()).toBeVisible();
+  await page.getByLabel("Sector", { exact: true }).selectOption({ label: "OTRO SECTOR (1)" });
+  await page.getByRole("button", { name: "Buscar" }).last().click();
+  await page.getByRole("link", { name: "MINISTERIO DE EJEMPLO" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "MINISTERIO DE EJEMPLO" })).toBeVisible();
+  await expect(page.getByText("80,0 % de la apropiación").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Origen de este registro" })).toBeVisible();
 });
