@@ -33,7 +33,7 @@
 ### Assumption A-007
 - Assumption: educational content is drafted by the engineering lead and published only after review by a legally qualified person.
 - Reason: legal precision requirement · Impact if wrong: lessons could contain inaccuracies.
-- Owner/verification: owner names the reviewer (PRD open question 2).
+- Owner/verification: owner names the reviewer (PRD open question 2). Since 2026-11-18 the review is recorded in the staff panel (role "Revisión jurídica"); each approval applies only to the exact content reviewed, and public pages show the date of approval, never the reviewer's name or notes.
 
 ### Assumption A-008
 - Assumption: when the Cámara bills dataset publishes a Senate number with the text "No Aplica" inserted before, after and between every character, removing that text gives the number the source intended (for example "068/2012 S").

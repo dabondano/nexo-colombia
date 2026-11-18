@@ -168,6 +168,7 @@ def _provision_out(session: Session, provision: LegalProvision) -> ProvisionOut:
         ancestors=ancestors,
         segments=[SegmentOut(**segment) for segment in (version.segments if version else [])],
         recorded_at=version.recorded_at if version else None,
+        version_id=version.id if version else None,
         previous=_neighbour(session, provision, after=False),
         next=_neighbour(session, provision, after=True),
         provenance=load_provenance(session, provision.source_record_id),

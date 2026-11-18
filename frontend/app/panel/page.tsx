@@ -54,12 +54,16 @@ async function Overview() {
             </li>
           </>
         ) : null}
-        {user.role === "legal_reviewer" ? (
+        {user.role === "legal_reviewer" || user.role === "admin" ? (
           <li className="rounded border border-rule bg-surface p-5">
-            <h2 className="text-xl font-semibold">Revisión jurídica</h2>
+            <h2 className="text-xl font-semibold">
+              <Link href="/panel/revision" className={linkClass}>
+                Revisión jurídica
+              </Link>
+            </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              El registro de revisiones de las lecciones y del explorador de la Constitución
-              todavía no está disponible en el panel.
+              Revisar las lecciones y los artículos de la Constitución que requieren revisión. Una
+              aprobación vale solo para el contenido exacto revisado.
             </p>
           </li>
         ) : null}

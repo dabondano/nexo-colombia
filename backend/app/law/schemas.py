@@ -67,6 +67,8 @@ class ProvisionOut(BaseModel):
     segments: list[SegmentOut]
     # When NEXO recorded this wording. It is not a legal date.
     recorded_at: datetime | None
+    # Identifies the current wording; legal reviews are pinned to it.
+    version_id: uuid.UUID | None
     previous: ProvisionRef | None
     next: ProvisionRef | None
     provenance: ProvenanceOut

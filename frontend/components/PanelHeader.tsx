@@ -8,6 +8,7 @@ const linkClass = "text-brand underline underline-offset-4";
 export function PanelHeader({ user, title }: { user: StaffUser; title: string }) {
   const steward = user.role === "admin" || user.role === "data_steward";
   const admin = user.role === "admin";
+  const reviewer = admin || user.role === "legal_reviewer";
   return (
     <header className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4 rounded border border-rule bg-surface p-4 text-sm">
@@ -33,6 +34,13 @@ export function PanelHeader({ user, title }: { user: StaffUser; title: string })
               <li>
                 <Link href="/panel/sincronizaciones" className={linkClass}>
                   Sincronizaciones
+                </Link>
+              </li>
+            ) : null}
+            {reviewer ? (
+              <li>
+                <Link href="/panel/revision" className={linkClass}>
+                  Revisión jurídica
                 </Link>
               </li>
             ) : null}

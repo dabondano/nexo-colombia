@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LessonReviewFallback, LessonReviewNotice } from "@/components/ReviewNotice";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EPISTEMIC_LABELS } from "@/lib/format";
 import {
   LESSONS,
-  REVIEW_STATUS,
   articlePath,
   type Lesson,
   type Statement,
 } from "@/lib/lessons";
+
+const EDITION_NOTE =
+  "El texto de los artículos enlazados es el de una edición informativa; compruebe la vigencia en la fuente oficial.";
 
 const linkClass = "text-brand underline underline-offset-4";
 
@@ -75,16 +78,9 @@ function LessonBody({ lesson }: { lesson: Lesson }) {
           {lesson.title}
         </h1>
         <p className="max-w-3xl text-lg text-ink-muted">{lesson.summary}</p>
-        <p
-          role="note"
-          className="rounded border border-warn bg-surface p-4 text-sm"
-        >
-          <span className="font-semibold text-warn">
-            Estado del contenido:{" "}
-          </span>
-          {REVIEW_STATUS} El texto de los artículos enlazados es el de una
-          edición informativa; compruebe la vigencia en la fuente oficial.
-        </p>
+        <Suspense fallback={<LessonReviewFallback extra={EDITION_NOTE} />}>
+          <LessonReviewNotice slug={lesson.slug} extra={EDITION_NOTE} />
+        </Suspense>
       </header>
 
       {lesson.steps.map((step, stepIndex) => (

@@ -17,10 +17,16 @@ export const AUDIT_ACTIONS: Record<string, string> = {
   user_created: "Cuenta creada",
   user_updated: "Cuenta modificada",
   sync_run: "Sincronización de datos",
+  review_recorded: "Revisión jurídica registrada",
 };
 
 export const STATUS_LABELS: Record<string, string> = {
   succeeded: "Completada",
   failed: "Fallida",
   running: "En curso",
+};
+
+export const DECISION_LABELS: Record<string, string> = {
+  approved: "Aprobado",
+  changes_requested: "Cambios pedidos",
 };

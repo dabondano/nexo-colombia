@@ -38,7 +38,8 @@ def seed(session: Session) -> None:
     session.execute(
         text(
             f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.initiative_author, "
-            f"{CORE_SCHEMA}.auth_session, {CORE_SCHEMA}.audit_event, {CORE_SCHEMA}.user_account, "
+            f"{CORE_SCHEMA}.content_review, {CORE_SCHEMA}.auth_session, {CORE_SCHEMA}.audit_event, "
+            f"{CORE_SCHEMA}.user_account, "
             f"{CORE_SCHEMA}.position_holding, {CORE_SCHEMA}.person, "
             f"{CORE_SCHEMA}.provision_version, {CORE_SCHEMA}.legal_provision, "
             f"{CORE_SCHEMA}.legal_instrument, {CORE_SCHEMA}.institution, "
