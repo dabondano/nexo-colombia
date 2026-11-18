@@ -16,6 +16,10 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from app.core.db import CORE_SCHEMA, Base
 
+# The audit table refers to staff accounts; importing their model registers that
+# table, so the audit log also works in processes that never load the API (the CLI).
+from app.auth import models as _auth_models  # noqa: E402, F401
+
 
 class AuditEvent(Base):
     __tablename__ = "audit_event"
