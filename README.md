@@ -73,3 +73,7 @@ Interface and accessibility tests (Playwright and axe-core) run against invented
 3. Political neutrality; individuals are described only through sourced, legally contextualized evidence.
 4. Privacy by design under Ley 1581 de 2012.
 5. Honest status reporting.
+
+## Deployment
+
+Production runs as one Docker Compose stack behind Caddy (automatic HTTPS). Step-by-step guide for an Oracle Cloud Always Free server: [docs/06-deployment-oracle.md](docs/06-deployment-oracle.md).

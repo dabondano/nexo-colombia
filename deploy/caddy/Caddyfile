@@ -1,0 +1,47 @@
+# Public entry point of NEXO Colombia. Caddy obtains and renews the HTTPS
+# certificate for NEXO_DOMAIN automatically. Only the web application is
+# exposed; the API and the database are reachable inside the stack only.
+{
+	email {$ACME_EMAIL}
+	order rate_limit before reverse_proxy
+}
+
+{$NEXO_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Per-IP limits (ADR-006): staff sign-in and panel forms, then any form.
+	# Over the limit, Caddy answers 429 without reaching the application.
+	rate_limit {
+		zone acceso_equipo {
+			match {
+				method POST
+				path /ingresar /ingresar/* /panel /panel/*
+			}
+			key {remote_host}
+			events 10
+			window 1m
+		}
+		zone formularios {
+			match {
+				method POST
+			}
+			key {remote_host}
+			events 60
+			window 1m
+		}
+	}
+
+	reverse_proxy web:3000 {
+		# Pages stream their content (Suspense); do not buffer responses.
+		flush_interval -1
+	}
+}

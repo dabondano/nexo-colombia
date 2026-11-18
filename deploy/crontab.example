@@ -1,0 +1,5 @@
+# Install with: crontab -e  (as the user that runs the stack), adjusting the path.
+# Times are UTC. Database backup every day at 07:30 UTC (02:30 in Bogotá).
+30 7 * * * /home/ubuntu/nexo-colombia/deploy/scripts/backup.sh >> /home/ubuntu/nexo-backup.log 2>&1
+# Data synchronization every Sunday at 08:30 UTC (03:30 in Bogotá).
+30 8 * * 0 /home/ubuntu/nexo-colombia/deploy/scripts/sync.sh >> /home/ubuntu/nexo-sync.log 2>&1
