@@ -78,6 +78,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               NEXO Colombia es un proyecto de interés público en construcción. No representa a
               ninguna entidad del Estado ni a ningún partido o movimiento político.
             </p>
+            <p className="mt-2">
+              <Link href="/ingresar" className="underline underline-offset-4">
+                Acceso del equipo
+              </Link>
+            </p>
           </div>
         </footer>
       </body>

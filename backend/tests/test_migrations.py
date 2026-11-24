@@ -22,5 +22,8 @@ def test_migrations_downgrade_and_upgrade_cleanly() -> None:
         "person",
         "position_holding",
         "initiative_author",
+        "user_account",
+        "auth_session",
+        "audit_event",
     } <= tables
     assert "document" in inspect(get_engine()).get_table_names(schema=SEARCH_SCHEMA)
