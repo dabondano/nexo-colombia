@@ -30,8 +30,10 @@ from datetime import date
 from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
-from app.congress.models import InitiativeAuthor, Person, PositionHolding
+from app.congress.models import Person, PositionHolding
 from app.core.db import get_engine
+from app.core.labels import ConfidenceClass, EpistemicLabel
+from app.core.relationships import Relationship
 from app.ingestion.datasets.representatives import PERIOD
 from app.ingestion.text import normalize_name
 from app.legislation.models import LegislativeInitiative
@@ -42,7 +44,9 @@ AUTHOR_RULE = (
     "representante del período, y el proyecto se radicó desde el 20 de julio de 2026. "
     "La fuente no identifica a los autores; es una asociación analítica, no un dato oficial."
 )
-MATCH_METHOD = "nombre_exacto"
+PREDICATE = "author_of"
+# Identifies the rule (A-012) in `relationship.method_note`; links made by it are rebuilt together.
+METHOD_NOTE = "nombre_exacto: coincidencia exacta y única con un representante del período (A-012)"
 TERM_START = date(2026, 7, 20)
 
 _TITLES = re.compile(r"^(?:(?:h\.?\s*[rs]\.?|hon\.?|honorable)\s+)+", re.IGNORECASE)
@@ -70,7 +74,11 @@ def split_authors(text: str) -> list[str]:
 
 
 def link_authors(session: Session) -> LinkResult:
-    session.execute(delete(InitiativeAuthor).where(InitiativeAuthor.match_method == MATCH_METHOD))
+    session.execute(
+        delete(Relationship).where(
+            Relationship.predicate == PREDICATE, Relationship.method_note == METHOD_NOTE
+        )
+    )
 
     people: dict[str, set[uuid.UUID]] = defaultdict(set)
     rows = session.execute(
@@ -82,7 +90,11 @@ def link_authors(session: Session) -> LinkResult:
         people[normalized].add(person_id)
 
     initiatives = session.execute(
-        select(LegislativeInitiative.id, LegislativeInitiative.authors_text).where(
+        select(
+            LegislativeInitiative.id,
+            LegislativeInitiative.authors_text,
+            LegislativeInitiative.source_record_id,
+        ).where(
             LegislativeInitiative.authors_text.is_not(None),
             or_(
                 LegislativeInitiative.camara_filed_on >= TERM_START,
@@ -92,7 +104,7 @@ def link_authors(session: Session) -> LinkResult:
     ).all()
 
     considered = seen = links = ambiguous = 0
-    for initiative_id, authors_text in initiatives:
+    for initiative_id, authors_text, source_record_id in initiatives:
         considered += 1
         linked: set[uuid.UUID] = set()
         for name in split_authors(authors_text or ""):
@@ -107,11 +119,18 @@ def link_authors(session: Session) -> LinkResult:
                 continue
             linked.add(person_id)
             session.add(
-                InitiativeAuthor(
-                    initiative_id=initiative_id,
-                    person_id=person_id,
-                    author_name=name,
-                    match_method=MATCH_METHOD,
+                Relationship(
+                    subject_type="person",
+                    subject_id=person_id,
+                    predicate=PREDICATE,
+                    object_type="legislative_initiative",
+                    object_id=initiative_id,
+                    confidence_class=ConfidenceClass.ANALYTICAL_ASSOCIATION.value,
+                    epistemic_label=EpistemicLabel.HIPOTESIS_ANALITICA.value,
+                    # The bill's record, whose list of authors the link was read from.
+                    source_record_id=source_record_id,
+                    method_note=METHOD_NOTE,
+                    evidence=name,
                 )
             )
             links += 1

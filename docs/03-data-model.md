@@ -98,7 +98,9 @@ All `core` tables share: `id` (UUID), `jurisdiction_code`, `source_record_id`, `
 
 ### 3.6 The relationship table (knowledge graph)
 
-`relationship`: `subject_type`, `subject_id`, `predicate`, `object_type`, `object_id`, `valid_from`, `valid_to`, `confidence_class`, `epistemic_label`, `source_record_id`, `method_note`.
+`relationship`: `subject_type`, `subject_id`, `predicate`, `object_type`, `object_id`, `valid_from`, `valid_to`, `confidence_class`, `epistemic_label`, `source_record_id`, `method_note`, `evidence` (the words in the source the link rests on, as published). Built on 2026-11-24 (`backend/app/core/relationships.py`); one link per subject, predicate and object.
+
+Predicates in use: `author_of` (person → legislative_initiative), class `analytical_association`, label `hipotesis_analitica`, made by the exact-name rule A-012; `source_record_id` points to the bill whose list of authors it was read from, `evidence` holds the name as published.
 
 - `confidence_class`: verified_official · declared · reported · historical · analytical_association · unverified_claim.
 - `epistemic_label`: hecho_documentado · interpretacion_juridica · hipotesis_analitica · simulacion_hipotetica · no_verificado.

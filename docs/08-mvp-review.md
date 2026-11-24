@@ -5,7 +5,7 @@ The roadmap's "MVP review" step: the owner checks each MVP item of
 **Probado** (tested). This page prepares that review: for each item, its stage,
 the evidence, and what is still open. Stages follow `STATUS.md`.
 
-All of this is in pull requests #5 to #12, not yet merged into `main`, and
+All of this is in pull requests #5 to #14, not yet merged into `main`, and
 nothing is deployed yet.
 
 ## Items
@@ -13,7 +13,7 @@ nothing is deployed yet.
 | # | Capability | Stage | Evidence | Open |
 |---|---|---|---|---|
 | 1 | Foundation: repository, Docker Compose, CI, migrations, settings | Probado | CI on every pull request: backend lint, types and 110 tests; frontend lint, unit tests and build; 68 browser tests; the production Compose stack and the Render container run end to end in CI | — |
-| 2 | Core schema: provenance, institutions, people, positions, initiatives, instruments, provisions, budgets, relationships | Probado, with one deviation | `test_migrations.py` and the table tests | **Deviation:** the design keeps every cross-record link in one `relationship` table (data model, principle 4). That table was not built; bill-to-author links live in their own table, `core.initiative_author`. Fix: build `relationship` and move the author links into it, or amend the design. |
+| 2 | Core schema: provenance, institutions, people, positions, initiatives, instruments, provisions, budgets, relationships | Probado | `test_migrations.py`, the table tests and `test_relationships.py` (the source-or-method constraint, one link per subject and object, unverified claims never public) | — (the deviation found on 2026-11-19 is fixed: bill-to-author links moved into `core.relationship` on 2026-11-24, all 1,753 links kept) |
 | 3 | Generic datos.gov.co connector: raw snapshots, validation, allow-lists, sync reports | Probado | `test_socrata.py`, `test_pipeline.py`; four live datasets loaded with every reject listed | — |
 | 4 | Institution directory | Probado | API and pages tested; 6,404 entities from the live source (development database) | Load in production after deployment |
 | 5 | Bills repository with filters | Probado | API and pages tested; 6,605 bills, 1 reject with its reason | Same |
@@ -28,11 +28,10 @@ nothing is deployed yet.
 
 ## What stands between this and a passed review
 
-1. **Merge** pull requests #5 to #12, in order (owner).
+1. **Merge** pull requests #5 to #14, in order (owner).
 2. **Legal review of the two lessons** (item 10): name the reviewer; they approve in the panel (owner, reviewer).
-3. **Relationship table** (item 2): decide between building it now and amending the design (owner; the work itself is small).
-4. **Deploy** following `07-deployment-render-neon.md` and load the data in production (owner, about an hour).
-5. **The owner's own review** of each item above, in the deployed site.
+3. **Deploy** following `07-deployment-render-neon.md` and load the data in production (owner, about an hour).
+4. **The owner's own review** of each item above, in the deployed site.
 
 ## Known limits accepted for the MVP (from STATUS)
 
