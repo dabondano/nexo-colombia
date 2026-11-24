@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     # The restricted account the application connects as in production.
     app_db_role: str = "nexo_app"
 
+    # SECOP II contracts kept (A-015): those of national-order entities signed in
+    # the last this-many days (owner decision of 2026-11-24, to fit the free
+    # database plan). Older contracts are removed from NEXO; SECOP keeps them.
+    secop_window_days: int = 90
+
     @field_validator("database_url", "migration_database_url")
     @classmethod
     def use_psycopg_driver(cls, url: str | None) -> str | None:

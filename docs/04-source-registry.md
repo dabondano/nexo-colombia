@@ -13,6 +13,7 @@ Common properties of datos.gov.co datasets: API endpoint `https://www.datos.gov.
 - Known limitations: entities are responsible for accuracy (CCE manual); atypical values must be checked against process documents via `urlproceso`
 - Access restrictions: **contains personal data** (natural-person ID numbers, legal-representative ID and gender, bank name and account number, names and IDs of spending officers and supervisors). NEXO ingests none of the bank fields and no ID numbers of natural persons into public tables
 - Verification status: Verified on 2026-11-17 by API
+- In NEXO since 2026-11-24 (A-015): national-order contracts signed in the last 90 days; 32 named fields requested with `$select` (no officials, legal representatives or bank fields); supplier name and number kept only when the supplier's document type is NIT. Checked in scope: payments never exceed invoices or value; one row with invoices above value; 860 with value 0.
 
 ### Source S-002: SECOP II – Procesos de Contratación
 - ID `p6dx-8zbt` · Rows: 9,047,771 · Data last updated: 2026-11-16 · Category: procurement processes (including processes without a contract, invited suppliers, base price, phases)

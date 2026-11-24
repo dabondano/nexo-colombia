@@ -5,7 +5,7 @@ row id, and spaced out to respect the portal's crawl delay.
 """
 
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from typing import Any
 
 import httpx
@@ -45,25 +45,40 @@ class SocrataClient:
     def dataset_url(self, dataset_id: str) -> str:
         return f"{self._portal_url}/d/{dataset_id}"
 
-    def iter_rows(self, dataset_id: str) -> Iterator[Row]:
-        """Yield every row of a dataset, including Socrata system fields (':id', ...)."""
+    def iter_rows(
+        self, dataset_id: str, *, where: str | None = None, fields: Sequence[str] | None = None
+    ) -> Iterator[Row]:
+        """Yield the rows of a dataset, including Socrata system fields (':id', ...).
+
+        `where` filters at the portal (SoQL); `fields` names the only columns
+        requested, so columns NEXO must not hold are never downloaded.
+        """
         offset = 0
         while True:
-            page = self._get_page(dataset_id, offset)
+            page = self._get_page(dataset_id, offset, where=where, fields=fields)
             yield from page
             if len(page) < self._page_size:
                 return
             offset += self._page_size
             self._sleep(self._delay)
 
-    def _get_page(self, dataset_id: str, offset: int) -> list[Row]:
+    def _get_page(
+        self,
+        dataset_id: str,
+        offset: int,
+        *,
+        where: str | None = None,
+        fields: Sequence[str] | None = None,
+    ) -> list[Row]:
         url = f"{self._portal_url}/resource/{dataset_id}.json"
         params = {
-            "$select": ":*, *",
+            "$select": ":id, :updated_at, " + ", ".join(fields) if fields else ":*, *",
             "$order": ":id",
             "$limit": str(self._page_size),
             "$offset": str(offset),
         }
+        if where:
+            params["$where"] = where
         last_error: Exception | None = None
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:

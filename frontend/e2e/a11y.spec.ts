@@ -35,6 +35,8 @@ const STATIC_PAGES = [
   "/fuentes",
   "/presupuesto",
   "/presupuesto/99-01-00",
+  "/contratos",
+  "/contratos?tipo=Compraventa",
   "/no-existe",
 ];
 
@@ -72,7 +74,7 @@ for (const path of STATIC_PAGES) {
   });
 }
 
-for (const list of ["/instituciones", "/legislacion", "/representantes"]) {
+for (const list of ["/instituciones", "/legislacion", "/representantes", "/contratos"]) {
   test(`sin infracciones WCAG 2.2 AA: primera ficha de ${list}`, async ({ page }) => {
     await page.goto(await firstRecord(page, list));
     await expect(page.getByRole("heading", { name: "Origen de este registro" })).toBeVisible();

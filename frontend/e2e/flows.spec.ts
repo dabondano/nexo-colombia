@@ -50,6 +50,7 @@ test("los registros que no existen responden 404", async ({ request }) => {
     `/legislacion/${missing}`,
     `/representantes/${missing}`,
     "/presupuesto/00-00-00",
+    `/contratos/${missing}`,
     "/constitucion/articulo-999",
     "/aprender/no-existe",
     "/no-existe",
@@ -117,12 +118,34 @@ test("el presupuesto y el directorio se enlazan, y el historial muestra cada act
   await expect(page).toHaveURL(/\/presupuesto\/99-01-00$/);
 });
 
+test("contratos: de la lista a un contrato, a la entidad y a sus contratos", async ({ page }) => {
+  await page.goto("/contratos");
+  await expect(page.getByText("últimos 90 días").first()).toBeVisible();
+  await page.getByLabel("Tipo de contrato").selectOption({ label: "Prestación de servicios (1)" });
+  await page.getByRole("button", { name: "Buscar" }).last().click();
+  await expect(page.getByRole("status").filter({ hasText: "1 contrato" })).toBeVisible();
+  await page.getByRole("link", { name: /servicios profesionales de ejemplo/ }).click();
+  // Natural persons are not named (A-015).
+  await expect(page.getByText("Persona natural").first()).toBeVisible();
+  await expect(page.getByText("PERSONA DE EJEMPLO")).toHaveCount(0);
+  await expect(page.getByText(/no muestra el nombre ni el documento/)).toBeVisible();
+  const entity = page.getByRole("region", { name: "En el directorio de entidades" });
+  await entity.getByRole("link", { name: "Agencia de Ejemplo" }).click();
+  await page
+    .getByRole("region", { name: "Contratos" })
+    .getByRole("link", { name: /Ver 2 contratos firmados/ })
+    .click();
+  await expect(page.getByRole("status").filter({ hasText: "2 contratos" })).toBeVisible();
+  await expect(page.getByText("EMPRESA DE EJEMPLO S.A.S.")).toBeVisible();
+});
+
 test("el inicio muestra cada conjunto de datos con su cifra y su fuente", async ({ page }) => {
   await page.goto("/");
   for (const label of [
     "Explorar el directorio de instituciones",
     "Ver los representantes",
     "Ver el presupuesto",
+    "Explorar los contratos",
   ]) {
     await expect(page.getByRole("link", { name: label })).toBeVisible();
   }

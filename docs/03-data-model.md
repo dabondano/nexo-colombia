@@ -76,7 +76,7 @@ All `core` tables share: `id` (UUID), `jurisdiction_code`, `source_record_id`, `
 |---|---|---|
 | `company` | legal_name, nit, company_type | Legal entities only |
 | `corporate_representative` | company_id, person_id, role, valid_from, valid_to | Only from official records |
-| `contract` | external_id, contracting_institution_id, contractor_company_id or contractor_person_id, purpose, contract_type, procurement_method, signed_at, start_at, end_at, status, funding_source, process_url | |
+| `contract` | external_id, contracting_institution_id, contractor_company_id or contractor_person_id, purpose, contract_type, procurement_method, signed_at, start_at, end_at, status, funding_source, process_url | Built 2026-11-24 as `core.contract` (source_key, entity_name, entity_nit, institution_id set by the NIT rule A-016, supplier_kind, supplier_name and supplier_nit only for suppliers with a NIT (A-015), the five published amounts, process_url). Rolling 90-day window |
 | `contract_amount` | contract_id, amount_kind (**awarded / contracted / invoiced / paid / pending**), value, currency, as_of | Different concepts are different rows, never one "value" column |
 | `contract_amendment` | contract_id, kind (adición, prórroga…), value_change, days_added, date | |
 | `contract_bidder` | process external id, bidder company/person, awarded (boolean) | |

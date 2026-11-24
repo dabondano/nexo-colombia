@@ -47,6 +47,8 @@ def as_app(connection: Connection, statement: str) -> None:
         "INSERT INTO core.audit_event (id, action, details) VALUES (gen_random_uuid(), 'x', '{}')",
         "UPDATE core.institution SET name = name",
         "DELETE FROM core.relationship",
+        # The one raw-layer deletion it may make (A-015).
+        "SELECT core.prune_contract_raw_records()",
     ],
 )
 def test_the_application_can_do_its_work(app_role: Connection, statement: str) -> None:

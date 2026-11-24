@@ -69,3 +69,13 @@
 - Assumption: a budget entity of the PGN (S-005) and an entity of Función Pública's directory are the same body when their names are equal after removing case, accents, punctuation and extra spaces, and exactly one directory entry has that name.
 - Reason: the two sources share no identifier (the budget has a budget code and no NIT; the directory has neither). Same strictness the owner chose for bill authors (A-012). Measured on 2026-11-24: 44 of 221 budget entities linked, 0 ambiguous. Dropping suffixes such as " - GESTIÓN GENERAL" would add 7 links but also map distinct bodies (the regulator CREG onto the Ministry of Mines), so it was rejected · Impact if wrong: a page could point to the wrong body; every link is labelled "Hipótesis analítica" with the rule shown, and links are rebuilt on every load.
 - Owner/verification: data steward; a reviewed mapping table would replace the rule for unlinked entities.
+
+### Assumption A-015
+- Assumption: loading SECOP II contracts (S-001) of national-order entities signed in the last 90 days, and removing older ones with their raw copies, is enough for the first contracts module; and suppliers who are natural persons should not be named or identified in NEXO.
+- Reason: owner decision of 2026-11-24 (rolling window) to keep the database within the free 0.5 GB plan: about 5.4 KB per contract including raw copy and search entry, about 17,000 new national contracts a month. Natural persons are 79 % of suppliers in scope; their names and document numbers are personal data that NEXO does not need to explain public spending, so only suppliers identified by a NIT keep name and NIT (data minimization, brief 5.5). SECOP keeps every contract and the full record is one link away · Impact if wrong: older contracts are not searchable in NEXO; a reader cannot see who a natural-person contractor is without opening SECOP.
+- Owner/verification: owner (window size, `NEXO_SECOP_WINDOW_DAYS`); legal reviewer for the privacy criterion.
+
+### Assumption A-016
+- Assumption: a contract's entity is the directory entry whose NIT equals the NIT SECOP publishes for it, when exactly one directory entry has that NIT. A tenth digit is treated as the DIAN check digit only when it is correct.
+- Reason: the NIT is an official identifier in both sources; unlike names (A-012, A-014) it does not depend on spelling. Several bodies share one legal person's NIT (561 duplicated NITs in the directory, for example Defense units), so those are left unlinked rather than guessed. Measured on 2026-11-24: 80 % of contracts in the window linked · Impact if wrong: a contract could show under a body that shares the NIT's legal person; the page states the rule.
+- Owner/verification: data steward.

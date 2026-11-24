@@ -21,6 +21,7 @@ from app.congress.models import Person, PositionHolding
 from app.ingestion.text import normalize_for_search
 from app.law.models import LegalInstrument, LegalProvision
 from app.legislation.models import LegislativeInitiative
+from app.procurement.models import Contract
 from app.search.models import SearchDocument
 
 TEXT_CONFIG = "spanish"
@@ -32,7 +33,16 @@ LEGISLATIVE_INITIATIVE = "legislative_initiative"
 LEGAL_PROVISION = "legal_provision"
 REPRESENTATIVE = "representative"
 BUDGET_ENTITY = "budget_entity"
-RECORD_TYPES = (LEGAL_PROVISION, LEGISLATIVE_INITIATIVE, REPRESENTATIVE, INSTITUTION, BUDGET_ENTITY)
+CONTRACT = "contract"
+RECORD_TYPES = (
+    LEGAL_PROVISION,
+    LEGISLATIVE_INITIATIVE,
+    REPRESENTATIVE,
+    INSTITUTION,
+    BUDGET_ENTITY,
+    CONTRACT,
+)
+SUPPLIER_KINDS = {"persona_natural": "Persona natural", "sin_definir": "Contratista sin definir"}
 SUMMARY_LENGTH = 240
 
 
@@ -109,6 +119,26 @@ def institution_entry(institution: Institution) -> SearchEntry:
             "C": [institution.order, institution.suborder, institution.organic_classification],
         },
     )
+
+
+def contract_entry(contract: Contract) -> SearchEntry:
+    supplier = contract.supplier_name or SUPPLIER_KINDS.get(contract.supplier_kind)
+    return SearchEntry(
+        record_type=CONTRACT,
+        record_id=contract.id,
+        title=_shorten(contract.purpose, 200),
+        summary=_join([contract.entity_name, supplier, contract.contract_type]),
+        record_date=contract.signed_on,
+        weighted_text={
+            "A": [contract.source_key, contract.reference, contract.process_id],
+            "B": [contract.purpose, contract.entity_name, contract.supplier_name],
+            "C": [contract.contract_type, contract.modality, contract.sector],
+        },
+    )
+
+
+def _shorten(text: str, limit: int) -> str:
+    return text if len(text) <= limit else text[: limit - 1].rsplit(" ", 1)[0] + "…"
 
 
 def initiative_entry(initiative: LegislativeInitiative) -> SearchEntry:

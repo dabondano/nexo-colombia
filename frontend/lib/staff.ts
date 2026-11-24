@@ -105,6 +105,17 @@ export function formatTimestamp(value: string | null): string {
   return value ? `${timestamp.format(new Date(value))} (hora de Colombia)` : "Nunca";
 }
 
+export type SourceQuality = {
+  source_id: string;
+  name: string;
+  external_ref: string;
+  last_run: SyncRun;
+  last_success_at: string | null;
+  source_updated_at: string | null;
+  records_by_quality: Record<string, number>;
+  checks: string[];
+};
+
 export type SyncRun = {
   id: string;
   source_name: string;

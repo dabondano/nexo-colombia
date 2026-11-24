@@ -4,7 +4,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.budget.links import budget_entity_for_institution
@@ -28,6 +28,7 @@ from app.core.listing import (
     filter_options,
 )
 from app.core.provenance import load_provenance
+from app.procurement.models import Contract
 
 router = APIRouter(prefix="/institutions", tags=["institutions"])
 
@@ -110,5 +111,9 @@ def get_institution(institution_id: uuid.UUID, session: SessionDep) -> Instituti
             if (linked := budget_entity_for_institution(session, institution.id))
             else None
         ),
+        contract_count=session.scalar(
+            select(func.count()).where(Contract.institution_id == institution.id)
+        )
+        or 0,
         provenance=load_provenance(session, institution.source_record_id),
     )

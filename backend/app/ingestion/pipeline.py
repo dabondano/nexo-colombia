@@ -167,7 +167,13 @@ def run_sync(session: Session, spec: DatasetSpec, rows: Iterable[Row]) -> SyncRe
                 extraction_method=spec.extraction_method,
                 payload=payload,
                 processing_history=[
-                    {"step": "minimize", "kept_fields": sorted(payload)},
+                    # The stored payload's keys are the fields kept; list only what was dropped.
+                    {
+                        "step": "minimize",
+                        "dropped_fields": sorted(
+                            key for key in set(row) - set(payload) if not key.startswith(":")
+                        ),
+                    },
                     {"step": "map", "at": started_at.isoformat()},
                     *({"step": REPAIR_STEP, "note": note} for note in notes),
                 ],

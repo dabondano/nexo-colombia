@@ -14,7 +14,9 @@ from app.congress.models import Person, PositionHolding
 from app.core.db import get_engine
 from app.law.models import LegalInstrument, LegalProvision, ProvisionVersion
 from app.legislation.models import LegislativeInitiative
+from app.procurement.models import Contract
 from app.search.indexing import (
+    contract_entry,
     index_entry,
     initiative_entry,
     institution_entry,
@@ -46,6 +48,9 @@ def reindex(session: Session) -> int:
     )
     for provision, instrument, text in session.execute(provisions).yield_per(1000):
         index_entry(session, provision_entry(provision, instrument, text))
+        count += 1
+    for contract in session.scalars(select(Contract)).yield_per(1000):
+        index_entry(session, contract_entry(contract))
         count += 1
     # Imported here: app.budget.links imports this package's indexing module.
     from app.budget.links import index_budget_entities

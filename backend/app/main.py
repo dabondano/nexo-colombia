@@ -16,6 +16,7 @@ from app.core.config import get_settings
 from app.core.db import get_session
 from app.law.router import instruments_router, provisions_router
 from app.legislation.router import router as initiatives_router
+from app.procurement.router import router as contracts_router
 from app.review.router import public_router as reviews_public_router
 from app.review.router import staff_router as reviews_staff_router
 from app.search.router import router as search_router
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(initiatives_router, prefix=API_PREFIX)
     app.include_router(representatives_router, prefix=API_PREFIX)
     app.include_router(budget_router, prefix=API_PREFIX)
+    app.include_router(contracts_router, prefix=API_PREFIX)
     app.include_router(instruments_router, prefix=API_PREFIX)
     app.include_router(provisions_router, prefix=API_PREFIX)
     app.include_router(search_router, prefix=API_PREFIX)

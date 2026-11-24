@@ -105,3 +105,61 @@ def budget_row(code: str = "99-01-00", **overrides: Any) -> Row:
     }
     row.update(overrides)
     return row
+
+
+def contract_row(contract_id: str = "CO1.PCCNTR.1000001", **overrides: Any) -> Row:
+    row: Row = {
+        ":id": f"row-{contract_id}",
+        ":updated_at": "2026-11-23T10:53:49.534Z",
+        "id_contrato": contract_id,
+        "proceso_de_compra": "CO1.BDOS.2000001",
+        "referencia_del_contrato": "001-2026",
+        "nombre_entidad": "AGENCIA DE EJEMPLO",
+        "nit_entidad": "900000001",
+        "departamento": "Distrito Capital de Bogotá",
+        "ciudad": "Bogotá",
+        "orden": "Nacional",
+        "sector": "Sector de ejemplo",
+        "rama": "Ejecutivo",
+        "estado_contrato": "En ejecución",
+        "tipo_de_contrato": "Prestación de servicios",
+        "modalidad_de_contratacion": "Contratación directa",
+        "justificacion_modalidad_de": "Servicios profesionales y apoyo a la gestión",
+        "objeto_del_contrato": "Prestar servicios profesionales de ejemplo en gestión documental",
+        "fecha_de_firma": "2026-11-02T09:00:00.000",
+        "fecha_de_inicio_del_contrato": "2026-11-03T00:00:00.000",
+        "fecha_de_fin_del_contrato": "2026-12-31T00:00:00.000",
+        "duraci_n_del_contrato": "58 Dia(s)",
+        "dias_adicionados": "0",
+        "tipodocproveedor": "Cédula de Ciudadanía",
+        "proveedor_adjudicado": "PERSONA DE EJEMPLO",
+        "documento_proveedor": "1000000001",
+        "es_pyme": "No",
+        "origen_de_los_recursos": "Distribuido",
+        "destino_gasto": "Funcionamiento",
+        "valor_del_contrato": "12000000",
+        "valor_facturado": "4000000",
+        "valor_pagado": "3000000",
+        "valor_pendiente_de_pago": "1000000",
+        "valor_pendiente_de_ejecucion": "8000000",
+        "urlproceso": {"url": "https://community.secop.gov.co/Public/Tendering/ejemplo"},
+        "ultima_actualizacion": "2026-11-20T12:00:00.000",
+        # Never requested from the portal; listed to prove they are not stored.
+        "n_mero_de_cuenta": "000-ejemplo",
+        "nombre_supervisor": "SUPERVISORA DE EJEMPLO",
+    }
+    row.update(overrides)
+    return row
+
+
+def company_contract(contract_id: str = "CO1.PCCNTR.1000002", **overrides: Any) -> Row:
+    return contract_row(
+        contract_id,
+        tipodocproveedor="NIT",
+        proveedor_adjudicado="EMPRESA DE EJEMPLO S.A.S.",
+        documento_proveedor="900000099",
+        tipo_de_contrato="Compraventa",
+        modalidad_de_contratacion="Mínima cuantía",
+        objeto_del_contrato="Compra de elementos de aseo de ejemplo",
+        **overrides,
+    )

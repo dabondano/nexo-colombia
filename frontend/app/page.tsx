@@ -8,6 +8,7 @@ import {
   fetchInstitutions,
   fetchRepresentatives,
   fetchBudgetEntities,
+  fetchContracts,
   fetchInstrument,
   fetchSources,
   type Source,
@@ -55,11 +56,12 @@ function DatasetCard({ dataset, source }: { dataset: Dataset; source: Source | u
 
 /** Only counts of records that are really loaded, each with its source. */
 async function AvailableData() {
-  const [institutions, initiatives, representatives, budget, constitution, sources] = await Promise.all([
+  const [institutions, initiatives, representatives, budget, contracts, constitution, sources] = await Promise.all([
     fetchInstitutions({ limit: 1 }),
     fetchInitiatives({ limit: 1 }),
     fetchRepresentatives({ limit: 1 }),
     fetchBudgetEntities({ limit: 1 }),
+    fetchContracts({ limit: 1 }),
     fetchInstrument(CONSTITUTION_SLUG),
     fetchSources(),
   ]);
@@ -102,6 +104,13 @@ async function AvailableData() {
       noun: "entidades con datos de ejecución presupuestal",
       href: "/presupuesto",
       linkLabel: "Ver el presupuesto",
+    },
+    {
+      sourceRef: "datos.gov.co:jbjy-vk9h",
+      total: contracts.ok ? contracts.data.total : 0,
+      noun: "contratos de entidades nacionales firmados en los últimos 90 días",
+      href: "/contratos",
+      linkLabel: "Explorar los contratos",
     },
     {
       sourceRef: "datos.gov.co:h7zv-k39x",

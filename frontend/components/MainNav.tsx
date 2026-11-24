@@ -11,6 +11,7 @@ const NAV = [
   { href: "/representantes", label: "Representantes" },
   { href: "/instituciones", label: "Instituciones" },
   { href: "/presupuesto", label: "Presupuesto" },
+  { href: "/contratos", label: "Contratos" },
   { href: "/fuentes", label: "Fuentes" },
 ];
 

@@ -37,6 +37,13 @@ export function PanelHeader({ user, title }: { user: StaffUser; title: string })
                 </Link>
               </li>
             ) : null}
+            {steward ? (
+              <li>
+                <Link href="/panel/calidad" className={linkClass}>
+                  Calidad de los datos
+                </Link>
+              </li>
+            ) : null}
             {reviewer ? (
               <li>
                 <Link href="/panel/revision" className={linkClass}>

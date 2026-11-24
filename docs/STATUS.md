@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-24 (budget linked to the institutions directory, in search, and kept per source update)
+Last updated: 2026-11-24 (Phase 3 started: SECOP II contracts and data-quality monitoring)
 
 ## Completed work
 
@@ -60,6 +60,10 @@ Last updated: 2026-11-24 (budget linked to the institutions directory, in search
 | Links from budget entities to the institutions directory (`core.relationship`, predicate `has_budget_line`, class analytical association, label "Hipótesis analítica"), exact unique name match only (A-014); shown on both pages with the rule | Integrado (development database only) | 221 budget entities, 44 linked, 0 ambiguous; looser matching was measured and rejected (it maps the regulator CREG onto the Ministry of Mines); `backend/tests/test_budget_links.py`, e2e flow budget ↔ directory |
 | Budget entities in the unified search (one result per entity, addressed by its budget code) | Probado | 221 entities indexed; `test_budget_links.py`; search results carry `record_key` for the page address |
 | Budget history `core.budget_snapshot`: each entity's totals per source update date, written after every budget sync; entity page shows a table of the figures at each update, with a note that the source gives no fiscal year | Probado | One update stored so far (2026-11-07); re-running the same update overwrites, a new update adds a row (`test_budget_links.py`); e2e checks the table with sample data |
+| SECOP II contracts (S-001) in `core.contract`: national-order entities, signed in the last 90 days (A-015); only named fields are requested from the portal; suppliers who are natural persons are not named; officials' and bank data never downloaded | Integrado (development database only) | Run of 2026-11-24: 84,727 rows loaded for 1 Jul–23 Nov, 0 rejected; pruned to the window: 43,824 contracts. Database 330 MB after vacuum (about 5.4 KB per contract with raw copy and search entry); `backend/tests/test_contracts.py` |
+| Contracts linked to the directory by entity NIT with check-digit handling, only when one directory entry has that NIT (A-016) | Integrado (development database only) | 617 entity NITs, 219 linked, 38 shared by several entries (not linked); 35,174 of 43,824 contracts (80 %) linked |
+| Contracts API (`/api/v1/contracts`, filters, detail, HEAD), contracts in the unified search, contract count on institution pages; web pages "Contratos" (list by signing date, never by value) and contract page with privacy, value and window notes | Probado | `test_contracts.py`; `frontend/e2e` (flow list → contract → entity → its contracts, axe-core on list, filtered list and a record, 404); checked with the real data at desktop and phone widths |
+| Data-quality monitoring: staff page "Calidad de los datos" (`/api/v1/admin/data-quality`, data stewards and admins) with last sync, publisher's last update, records by quality status and checks (failed run, no good load in 8 days, 10 % fewer rows, higher reject rate) | Probado | `backend/tests/test_quality.py`; e2e for steward access and reviewer refusal |
 | Representatives API (`/api/v1/representatives`, filters, detail with contact, provenance and linked bills) and representatives in the unified search | Probado | `backend/tests/test_representatives.py` |
 | Web pages "Representantes" (directory with name, constituency and party filters) and representative page (Cámara data, institutional contact, linked bills labelled "Hipótesis analítica", provenance with the column note); bill pages list linked authors | Probado | `frontend/e2e` (desktop and phone, sample data): bill to author and back, opposition seat, directory and record under axe-core, 404 for unknown representatives; checked against the real data at desktop and phone widths |
 | Record pages answer HTTP 404 for unknown records | Probado | `frontend/proxy.ts` asks the API with a HEAD request (new HEAD routes on the institution, initiative and provision detail endpoints, covered in `test_records_api.py` and `test_constitution.py`) before the page renders; unknown lessons answer 404 from the lesson list. Checked against the loaded data: existing records 200, unknown or malformed identifiers 404 with `noindex`, client navigation 404; if the API is down the page still renders and says so (200) |
@@ -68,6 +72,9 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 
 ## Pending tasks
 
+- Contracts: the weekly sync downloads about 45,000 rows (about 5 minutes). Contracts of entities outside the national order, and older than 90 days, are not loaded. Raw copies of contracts still in the window keep accumulating changed versions; watch the database size on the quality page's host (Neon dashboard).
+- Contract suppliers are not yet linked to companies (`company`, Phase 5); contract and budget are not yet linked to each other.
+- Phase 3 still to do: laws and decrees (Gestor Normativo), file ingestion, entity resolution beyond exact names and NITs (for example a reviewed mapping table), alerts sent outside the panel.
 - Links between records beyond bill authors (for example from a bill to an entity); needs reliable identifiers.
 - Search improvements for a later phase: related words and synonyms (semantic search, Phase 4), highlighted excerpts, date-range controls in the page (the API already accepts them).
 - Scheduled synchronization (today the load is started by hand from the command line; the panel shows the results). Budget history starts with the first sync after this version: earlier updates exist only in the raw layer and are not back-filled.

@@ -6,6 +6,7 @@ import { AssociationNote } from "@/components/AssociationNote";
 import { Field, NOT_IN_SOURCE, Notice } from "@/components/Notice";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
 import { fetchInstitution } from "@/lib/api";
+import { formatNumber } from "@/lib/format";
 
 export async function generateMetadata(
   props: PageProps<"/instituciones/[id]">,
@@ -83,6 +84,31 @@ async function InstitutionRecord({ params }: { params: Promise<{ id: string }> }
             <span className="text-ink-muted">(código {entity.budget_entity.entity_code})</span>
           </p>
           <AssociationNote label={entity.budget_entity_label} rule={entity.budget_entity_rule} />
+        </section>
+      ) : null}
+
+      {entity.contract_count > 0 ? (
+        <section
+          aria-labelledby="titulo-contratos"
+          className="rounded border border-rule bg-surface p-5"
+        >
+          <h2 id="titulo-contratos" className="text-xl font-semibold">
+            Contratos
+          </h2>
+          <p className="mt-3 text-sm">
+            <Link
+              href={`/contratos?entidad=${entity.id}`}
+              className="text-brand underline underline-offset-4"
+            >
+              Ver {formatNumber(entity.contract_count)}{" "}
+              {entity.contract_count === 1 ? "contrato firmado" : "contratos firmados"} en los
+              últimos 90 días
+            </Link>
+          </p>
+          <p className="mt-3 text-sm text-ink-muted">
+            Contratos de SECOP II cuyo NIT de la entidad coincide con el de esta entidad del
+            directorio, y con ninguna otra.
+          </p>
         </section>
       ) : null}
 
