@@ -5,11 +5,19 @@ participation and Congress, read article by article like the Constitution).
 Each page id was checked on 2026-11-24 by downloading the page and reading its
 title (Ley 610 de 2000 and Ley 1952 de 2019 added the same day, 17 laws).
 To add a law, add it here and run the reader's tests against its page.
-Decreto 111 de 1996 is not listed: it reproduces a whole statute inside its
-article 1 and needs a reader of its own.
+Decreto 111 de 1996 compiles the budget statute inside its article 1; it is
+read by app/law/statutes.read_compilation, told where the statute ends.
 """
 
 from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Compiled:
+    """A statute compiled inside the decree's article 1: its name and article count."""
+
+    name: str
+    articles: int
 
 
 @dataclass(frozen=True)
@@ -17,10 +25,12 @@ class StatuteSpec:
     gestor_id: int
     number: str
     year: int
+    kind: str = "ley"
+    compiled: Compiled | None = None
 
     @property
     def slug(self) -> str:
-        return f"ley-{self.number}-de-{self.year}"
+        return f"{self.kind}-{self.number}-de-{self.year}"
 
     @property
     def page_url(self) -> str:
@@ -32,6 +42,14 @@ STATUTES = (
     StatuteSpec(304, "80", 1993),  # Estatuto General de Contratación
     StatuteSpec(330, "134", 1994),  # Mecanismos de participación ciudadana
     StatuteSpec(327, "152", 1994),  # Ley Orgánica del Plan de Desarrollo
+    # Estatuto Orgánico del Presupuesto (Leyes 38 de 1989, 179 de 1994 y 225 de 1995)
+    StatuteSpec(
+        5306,
+        "111",
+        1996,
+        kind="decreto",
+        compiled=Compiled("Estatuto Orgánico del Presupuesto", 127),
+    ),
     StatuteSpec(186, "489", 1998),  # Organización de la administración pública
     StatuteSpec(5725, "610", 2000),  # Procesos de responsabilidad fiscal
     StatuteSpec(14861, "909", 2004),  # Empleo público y carrera administrativa

@@ -11,7 +11,7 @@ from app.ingestion.pipeline import run_sync
 from app.law.constitution import StructureError
 from app.law.html_blocks import extract_blocks
 from app.law.statute_catalog import StatuteSpec
-from app.law.statutes import ParsedStatute, read_statute
+from app.law.statutes import ParsedStatute, read_compilation, read_statute
 from app.search.reindex import reindex
 from app.sources.registry import seed_registry
 from tests.statute_page import article, bold, page, plain
@@ -166,3 +166,69 @@ def test_load_and_read_through_the_api(
     ).json()["items"]
     assert hits[0]["title"] == "Artículo 1 · Ley 9999 de 2020"
     assert hits[0]["record_key"] == "leyes/ley-9999-de-2020/articulo-1"
+
+
+def compilation_page(*, last: str = "ARTÍCULO 3") -> str:
+    return page(
+        article("ARTÍCULO 1", "Este decreto compila las leyes de ejemplo."),
+        plain("El estatuto de ejemplo será el siguiente:"),
+        bold("I. Del sistema de ejemplo"),
+        article("ARTÍCULO 1", "Primer artículo del estatuto."),
+        article("ARTÍCULO 2", "Segundo artículo del estatuto."),
+        plain("II. De los principios de ejemplo"),
+        article(last, "Último artículo del estatuto."),
+        article("ARTÍCULO 2", "Este decreto rige desde su publicación."),
+        heading="DECRETO 9999 DE 2020",
+    )
+
+
+def read_compiled(html: str) -> ParsedStatute:
+    blocks = extract_blocks(html, content_class="descripcion-contenido", skip_class="card")
+    return read_compilation(blocks, "9999", 2020, "Estatuto de Ejemplo", 3)
+
+
+def test_a_compiled_statute_is_read_apart_from_the_decree() -> None:
+    parsed = read_compiled(compilation_page())
+    assert parsed.instrument_type == "decreto"
+    assert parsed.article_count == 5
+    assert paths(parsed) == [
+        "articulo-1",
+        "estatuto",
+        "estatuto/capitulo-i",
+        "estatuto-articulo-1",
+        "estatuto-articulo-2",
+        "estatuto/capitulo-ii",
+        "estatuto-articulo-3",
+        "articulo-2",
+    ]
+    by_path = {p.path: p for p in parsed.provisions}
+    assert by_path["estatuto"].label == "Estatuto de Ejemplo"
+    assert by_path["estatuto/capitulo-ii"].heading == "De los principios de ejemplo"
+    assert by_path["estatuto/capitulo-ii"].parent_path == "estatuto"
+    assert by_path["estatuto-articulo-3"].parent_path == "estatuto/capitulo-ii"
+    assert by_path["estatuto-articulo-3"].label == "Artículo 3 del Estatuto"
+    assert [p.position for p in parsed.provisions] == list(range(1, 9))
+    # The decree's article 1 keeps only its own wording.
+    assert by_path["articulo-1"].segments[-1].text == "El estatuto de ejemplo será el siguiente:"
+
+
+def test_a_compiled_statute_that_does_not_end_where_expected_stops() -> None:
+    with pytest.raises(StructureError, match="artículo 3 del estatuto"):
+        read_compiled(compilation_page(last="ARTÍCULO 4"))
+
+
+def test_an_editors_note_opening_an_article_is_kept_apart() -> None:
+    parsed = read(
+        page(
+            article(
+                "ARTÍCULO 1",
+                "Reglamentado parcialmente por el Decreto Nacional 1 de 2021. Modificado el plazo "
+                "de ejemplo según la ley.",
+            ),
+        )
+    )
+    segments = parsed.provisions[0].segments
+    assert [(s.kind, s.text) for s in segments] == [
+        ("note", "Reglamentado parcialmente por el Decreto Nacional 1 de 2021."),
+        ("text", "Modificado el plazo de ejemplo según la ley."),
+    ]

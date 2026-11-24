@@ -12,7 +12,7 @@ const linkClass = "text-brand underline underline-offset-4";
 export async function generateMetadata(props: PageProps<"/leyes/[ley]">): Promise<Metadata> {
   const { ley } = await props.params;
   const result = await fetchInstrument(ley);
-  return { title: result.ok ? lawName(result.data) : "Ley" };
+  return { title: result.ok ? lawName(result.data) : "Norma" };
 }
 
 type Node = { item: OutlineItem; children: Node[] };
@@ -28,6 +28,11 @@ function buildTree(outline: OutlineItem[]): Node[] {
     (parent ? parent.children : roots).push(node);
   }
   return roots;
+}
+
+/** Divisions are anchors of the index: "titulo-i", "estatuto-capitulo-ii". */
+function anchor(item: OutlineItem): string {
+  return item.path.replaceAll("/", "-");
 }
 
 function heading(item: OutlineItem): string {
@@ -55,8 +60,8 @@ function Division({ node, slug, depth }: { node: Node; slug: string; depth: numb
   const divisions = node.children.filter((child) => child.item.kind !== "articulo");
   const Heading = depth === 0 ? "h2" : depth === 1 ? "h3" : "h4";
   const size = depth === 0 ? "font-serif text-2xl text-brand" : depth === 1 ? "text-lg" : "text-base";
-  // Top-level divisions are anchors of the index ("#titulo-i").
-  const id = depth === 0 ? node.item.path : `division-${node.item.id}`;
+  // Top-level divisions and their children are anchors of the index.
+  const id = depth <= 1 ? anchor(node.item) : `division-${node.item.id}`;
   return (
     <section aria-labelledby={id} className={depth === 0 ? "scroll-mt-4" : "mt-4"}>
       <Heading id={id} className={`font-semibold ${size}`}>
@@ -90,16 +95,25 @@ async function Outline({ params }: { params: Promise<{ ley: string }> }) {
   const loose = tree.filter((node) => node.item.kind === "articulo");
   const divisions = tree.filter((node) => node.item.kind !== "articulo");
   const summary = law.title.replace(`${lawName(law)}, `, "");
+  // One top-level division (a compiled statute): index its divisions instead.
+  const indexed =
+    divisions.length === 1
+      ? divisions[0].children.filter((node) => node.item.kind !== "articulo")
+      : divisions;
 
   return (
     <>
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium uppercase tracking-wide text-accent">Ley</p>
+        <p className="text-sm font-medium uppercase tracking-wide text-accent">
+          {law.instrument_type}
+        </p>
         <h1 className="font-serif text-3xl font-semibold text-brand">{lawName(law)}</h1>
         <p className="max-w-3xl text-lg">{summary}</p>
         <p className="text-sm text-ink-muted">
           {[
-            law.promulgated_on ? `Expedida el ${formatCalendarDate(law.promulgated_on)}` : null,
+            law.promulgated_on
+              ? `${law.instrument_type === "decreto" ? "Expedido" : "Expedida"} el ${formatCalendarDate(law.promulgated_on)}`
+              : null,
             law.official_publication_ref,
           ]
             .filter(Boolean)
@@ -120,15 +134,15 @@ async function Outline({ params }: { params: Promise<{ ley: string }> }) {
         </p>
       </section>
 
-      {divisions.length > 1 ? (
+      {indexed.length > 1 ? (
         <nav aria-labelledby="titulo-indice" className="rounded border border-rule bg-surface p-5">
           <h2 id="titulo-indice" className="text-xl font-semibold">
             Índice
           </h2>
           <ul className="mt-2 flex flex-col gap-1">
-            {divisions.map((node) => (
+            {indexed.map((node) => (
               <li key={node.item.id}>
-                <a href={`#${node.item.path}`} className={linkClass}>
+                <a href={`#${anchor(node.item)}`} className={linkClass}>
                   {heading(node.item)}
                 </a>
               </li>

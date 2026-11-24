@@ -30,15 +30,16 @@ from app.law.constitution import StructureError
 from app.law.html_blocks import extract_blocks
 from app.law.models import LegalInstrument
 from app.law.statute_catalog import STATUTES, StatuteSpec
-from app.law.statutes import ParsedStatute, read_statute
+from app.law.statutes import ParsedStatute, read_compilation, read_statute
 from app.sources.registry import LAWS_REF
 
 SOURCE_REF = LAWS_REF
 GESTOR_URL = "https://www.funcionpublica.gov.co/eva/gestornormativo/"
 SEPARATOR = ":"
 PAUSE_SECONDS = 1.0
-# Laws sit just below the Constitution in the hierarchy shown to readers.
+# Laws sit just below the Constitution in the hierarchy shown to readers, decrees below laws.
 HIERARCHY_LEVEL = 2
+DECREE_LEVEL = 3
 
 ALLOWED_FIELDS = frozenset(
     {
@@ -118,7 +119,13 @@ def to_rows(spec: StatuteSpec, parsed: ParsedStatute) -> list[Row]:
 
 def rows_for(spec: StatuteSpec, html: str) -> list[Row]:
     blocks = extract_blocks(html, content_class="descripcion-contenido", skip_class="card")
-    return to_rows(spec, read_statute(blocks, spec.number, spec.year))
+    if spec.compiled:
+        parsed = read_compilation(
+            blocks, spec.number, spec.year, spec.compiled.name, spec.compiled.articles
+        )
+    else:
+        parsed = read_statute(blocks, spec.number, spec.year)
+    return to_rows(spec, parsed)
 
 
 def fetch_rows() -> Iterator[Row]:
@@ -188,7 +195,9 @@ def upsert(
                 instrument_type=values["instrument_type"],
                 number=values["number"],
                 year=values["year"],
-                hierarchy_level=HIERARCHY_LEVEL,
+                hierarchy_level=(
+                    DECREE_LEVEL if values["instrument_type"] == "decreto" else HIERARCHY_LEVEL
+                ),
                 title=values["title"],
                 source_record_id=source_record_id,
             )
@@ -218,7 +227,7 @@ def _title(name: str, summary: str | None) -> str:
     text = " ".join(summary.split())
     if text.isupper():
         text = text.capitalize()
-    return f"{name}, {text[0].lower()}{text[1:]}".rstrip(" .")
+    return f"{name}, {text[0].lower()}{text[1:]}".rstrip(" .\"”'")
 
 
 SPEC = DatasetSpec(
