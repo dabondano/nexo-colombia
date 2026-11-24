@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-24 (relationship table built; author links moved into it)
+Last updated: 2026-11-24 (restricted database account for the application)
 
 ## Completed work
 
@@ -54,6 +54,7 @@ Last updated: 2026-11-24 (relationship table built; author links moved into it)
 | Production stack (`deploy/compose.yaml`): PostgreSQL, API, Next.js standalone server, and Caddy with automatic HTTPS, security headers and per-IP limits on POST (10 a minute on sign-in and panel, 60 elsewhere); backup, restore, sync and server setup scripts; guide for Oracle Cloud Always Free (docs/06) | Probado (CI) | CI job `deploy` builds and runs the stack and checks HTTPS, headers, 404s, panel redirect, the 429 limit, that API and database are not published, and the backup script. Not yet deployed; the Arm (aarch64) images are first built on the server |
 | Reproduction from a clean workspace (2026-11-18) | Probado | Fresh clone, empty PostgreSQL 16: migrations, source registry, `python -m app.ingestion.cli all` from the live sources (entities 6,404 loaded, 0 rejected; bills 6,605 loaded, 1 rejected; Constitution 448 rows, 0 rejected), `python -m app.search.reindex` (13,393 documents), 77 backend tests, lint, types, frontend lint and build: all identical to the M3 figures |
 | Representatives (Cámara, período 2026-2027) loaded into `core.person` and `core.position_holding`, with the shifted columns of the source reassigned by content (A-011) | Integrado (development database only) | Run of 2026-11-18: 362 rows seen, 181 loaded, 181 rejected as the second row of a member (kept in `core.sync_reject`); `backend/tests/test_representatives.py` |
+| Restricted database account for the application (`nexo_app`): reads and writes data, but only reads and adds on the append-only tables (audit log, raw records, rejected rows, legal reviews) and cannot alter, drop or truncate tables; migrations and privileges run as the owner (`NEXO_MIGRATION_DATABASE_URL`, `python -m app.core.grants`); refuses an account with broad powers such as Neon's neon_superuser | Probado | `backend/tests/test_grants.py` (17 allowed and refused statements, broad-powers refusal); on 2026-11-24 the full browser suite and a full live sync, relinking and reindex ran as the restricted account without a permission error; CI runs both deployment setups with it and checks that the audit log cannot be emptied |
 | Relationship table `core.relationship` (data model 3.6): typed links with confidence class, epistemic label, source record or method note (a database constraint requires one of them), and the published evidence; unverified claims are filtered from every public query | Probado | `backend/tests/test_relationships.py`; migration copies existing links and back (checked on the real data: 1,753 links kept both ways) |
 | Links from bills to their authors among the representatives (in `core.relationship` since 2026-11-24, predicate `author_of`, class analytical association; first stored in `core.initiative_author`), exact name match only, bills filed from 2026-07-20 (A-012) | Integrado (development database only) | 302 bills, 2,325 author names, 1,753 links, 0 ambiguous; rebuilt by `python -m app.ingestion.cli all` or `python -m app.legislation.authors`; tests in `test_representatives.py` |
 | Representatives API (`/api/v1/representatives`, filters, detail with contact, provenance and linked bills) and representatives in the unified search | Probado | `backend/tests/test_representatives.py` |
@@ -87,7 +88,7 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 - Bill status is the one published in the dataset (last updated by the source on 2026-09-17) and may lag behind actual proceedings.
 - Search matches words and their plurals only: "educación" does not find "educativo". Results are ordered by text match alone.
 - A database that already holds records must rebuild its search index once after this version is installed (`python -m app.search.reindex`), so that title matches are listed first; new loads index records as they are published.
-- Per-IP limits: Caddy on the Oracle setup; the web app's own limiter on Render (in memory, one process). Local development has none. Expired sessions are not yet purged from `core.auth_session`. The application connects to PostgreSQL as the database owner, so it could truncate `core.audit_event`; a narrower application role is pending.
+- Per-IP limits: Caddy on the Oracle setup; the web app's own limiter on Render (in memory, one process). Local development has none. Expired sessions are not yet purged from `core.auth_session`. 
 - Record pages for unknown identifiers now answer 404 (fixed 2026-11-18). Each record page request costs one extra lightweight HEAD request to the API. When the API is unreachable the check lets the request through, so the page shows its connection notice with status 200.
 
 ## Architectural decisions

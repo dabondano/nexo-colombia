@@ -19,7 +19,8 @@ jobs:
     steps:
       - name: Dump
         env:
-          DATABASE_URL: ${{ secrets.NEXO_DATABASE_URL }}
+          # The owner account when configured: it can read every table.
+          DATABASE_URL: ${{ secrets.NEXO_MIGRATION_DATABASE_URL || secrets.NEXO_DATABASE_URL }}
         run: |
           set -euo pipefail
           test -n "$DATABASE_URL" || { echo "Set the NEXO_DATABASE_URL secret."; exit 1; }

@@ -43,4 +43,3 @@ nothing is deployed yet.
   technology have not been done; automatic checks find only part of the problems.
 - On Render, the first visit after 15 idle minutes waits about a minute; the free
   bandwidth suits a pilot.
-- The application connects to the database as its owner (a narrower role is pending).

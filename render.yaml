@@ -13,7 +13,11 @@ services:
     dockerContext: .
     healthCheckPath: /
     envVars:
+      # The restricted account "nexo_app" (created with SQL; docs/07).
       - key: NEXO_DATABASE_URL
+        sync: false
+      # The owner account, used only for migrations and grants at start.
+      - key: NEXO_MIGRATION_DATABASE_URL
         sync: false
       - key: NEXO_ENVIRONMENT
         value: production

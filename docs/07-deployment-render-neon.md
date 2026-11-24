@@ -29,8 +29,24 @@ Oracle (docs/06) or the Neon + Cloud Run combination are the fallbacks.
 2. Create a project named `nexo`: PostgreSQL 17 (or 16), region **AWS US East (N. Virginia)** —
    the same area as the Render service, so the pages' queries stay fast.
 3. Open **Connect**, turn **off** "Connection pooling", and copy the connection string
-   (`postgresql://…neon.tech/neondb?sslmode=require…`). The direct connection is needed
-   for migrations; keep the string secret.
+   (`postgresql://neondb_owner:…@…neon.tech/neondb?sslmode=require…`). This is the
+   **owner string**: it is used only for migrations and backups. Keep it secret.
+4. Create the restricted account the application will use. Open the **SQL Editor** and run,
+   with a long random password of letters and digits (for example from
+   `openssl rand -hex 24`):
+
+   ```sql
+   CREATE ROLE nexo_app LOGIN PASSWORD 'the-password';
+   ```
+
+   Create it **with SQL, not in the console's Roles page**: Neon makes console-created
+   roles administrators (neon_superuser, which can write every table), and NEXO
+   refuses to start with such an application account.
+5. Build the **application string** from the owner string by replacing
+   `neondb_owner:<owner password>` with `nexo_app:<the password>`.
+   NEXO grants this account its privileges itself at every start: it can read and
+   write the data, but cannot change or delete the audit log, the raw records, the
+   rejected rows or the legal reviews, nor alter the tables.
 
 ## 2. Web service on Render
 
@@ -38,7 +54,8 @@ Oracle (docs/06) or the Neon + Cloud Run combination are the fallbacks.
    `dabondano/nexo-colombia`.
 2. **New → Blueprint**, pick the repository and branch `main`. Render reads
    `render.yaml` and proposes one free web service, `nexo-colombia`.
-3. When asked for `NEXO_DATABASE_URL`, paste the Neon connection string. Apply.
+3. When asked, paste the **application string** into `NEXO_DATABASE_URL` and the
+   **owner string** into `NEXO_MIGRATION_DATABASE_URL`. Apply.
 4. The first build takes several minutes. On start, the container applies the
    database migrations, then serves the site at `https://nexo-colombia.onrender.com`
    (or the name Render assigns). You can add your own domain later in the service's
@@ -47,7 +64,8 @@ Oracle (docs/06) or the Neon + Cloud Run combination are the fallbacks.
 ## 3. Scheduled jobs on GitHub
 
 1. In GitHub: repository → **Settings → Secrets and variables → Actions → New
-   repository secret**: name `NEXO_DATABASE_URL`, value the same Neon string.
+   repository secret**, twice: `NEXO_DATABASE_URL` with the application string, and
+   `NEXO_MIGRATION_DATABASE_URL` with the owner string.
 2. **Actions → Data sync → Run workflow** loads every dataset the first time
    (a few minutes). After that it runs every Sunday; **Database backup** runs daily
    and keeps each dump for 30 days as a downloadable artifact of the run.
@@ -59,7 +77,7 @@ On your computer, with the backend set up (`uv sync` in `backend/`):
 
 ```bash
 cd backend
-NEXO_DATABASE_URL='<the Neon string>' uv run python -m app.auth.cli create-admin you@example.org "Your name"
+NEXO_DATABASE_URL='<the application string>' uv run python -m app.auth.cli create-admin you@example.org "Your name"
 ```
 
 Then open `https://<your-service>.onrender.com/ingresar` with the one-time password
@@ -72,7 +90,7 @@ it prints; you will be asked to choose your own.
 | Deploy a change | Merge to `main`; Render rebuilds and redeploys automatically. |
 | Synchronize data now | GitHub → Actions → Data sync → Run workflow. Results appear in the panel ("Sincronizaciones"). |
 | Get a backup | GitHub → Actions → Database backup → the latest run → Artifacts. |
-| Restore a backup | `pg_restore --clean --if-exists --no-owner -d '<Neon string>' nexo-<date>.dump` (PostgreSQL 17 client tools). |
+| Restore a backup | `pg_restore --clean --if-exists --no-owner -d '<owner string>' nexo-<date>.dump`, then restart the Render service so it reapplies the application account's privileges (PostgreSQL 17 client tools). |
 | See logs | Render dashboard → the service → Logs. |
 | Wake-up delay | Optional: a free uptime monitor requesting the home page every 10 minutes keeps the service awake (one service fits in the 750 monthly hours). Render's documentation neither allows nor forbids this. |
 
@@ -84,6 +102,10 @@ it prints; you will be asked to choose your own.
   `True-Client-IP` header that Cloudflare, in front of Render, sets; Render's
   `X-Forwarded-For` can be forged by the visitor and is not used. Per-account
   lockout in the API applies as well.
-- The database connection string lives only in Render's environment and in the
-  GitHub secret. Backup artifacts contain staff e-mail addresses and password
+- The application connects as `nexo_app`, which cannot change or delete the audit
+  log, the raw records, the rejected rows or the legal reviews, nor alter tables
+  (`backend/app/core/grants.py`). The owner account is used only at start, for
+  migrations and privileges, and by the backup job.
+- The connection strings live only in Render's environment and in the GitHub
+  secrets. Backup artifacts contain staff e-mail addresses and password
   hashes and are visible to everyone with access to the repository.
