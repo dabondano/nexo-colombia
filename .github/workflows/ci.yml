@@ -58,6 +58,7 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm test:unit
       - run: pnpm build
 
   # Web interface and accessibility tests against invented sample data.
@@ -174,3 +175,61 @@ jobs:
         if: failure()
         working-directory: deploy
         run: docker compose logs --no-color --tail 200
+
+  # The single container for a free Render service (deploy/render), run as Render
+  # runs it, against PostgreSQL with invented sample data.
+  render-image:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexo
+          POSTGRES_PASSWORD: nexo
+          POSTGRES_DB: nexo_ui
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexo -d nexo_ui"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker build -f deploy/render/Dockerfile -t nexo-render .
+      - name: Start like Render does
+        run: |
+          docker run -d --name nexo --network host \
+            -e PORT=10000 \
+            -e NEXO_ENVIRONMENT=production \
+            -e NEXO_CLIENT_IP_HEADER=true-client-ip \
+            -e NEXO_DATABASE_URL=postgresql://nexo:nexo@localhost:5432/nexo_ui \
+            nexo-render
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:10000/ && break; sleep 2; done
+          docker exec -w /app/api nexo python -m tests.seed_ui --force
+      - name: Smoke tests
+        run: |
+          set -euo pipefail
+          code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+          test "$(code http://localhost:10000/)" = 200
+          test "$(code http://localhost:10000/presupuesto/99-01-00)" = 200
+          test "$(code http://localhost:10000/presupuesto/00-00-00)" = 404
+          test "$(code http://localhost:10000/panel)" = 307
+          # The API listens on 127.0.0.1 inside the container only.
+          docker exec nexo python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready')"
+          # Per-IP limit on staff forms, keyed on the trusted header.
+          statuses=$(for i in $(seq 1 12); do code -X POST -H 'true-client-ip: 203.0.113.5' http://localhost:10000/ingresar; echo; done)
+          echo "$statuses" | sort | uniq -c
+          test "$(echo "$statuses" | grep -c '^429$')" = 2
+          test "$(code -X POST -H 'true-client-ip: 198.51.100.7' http://localhost:10000/ingresar)" != 429
+      - name: Memory use (Render's free instance has 512 MB)
+        run: |
+          for page in / /presupuesto /legislacion /constitucion /representantes; do
+            curl -s -o /dev/null "http://localhost:10000$page"
+          done
+          docker stats --no-stream --format '{{.MemUsage}}' nexo
+      - name: Logs on failure
+        if: failure()
+        run: docker logs nexo --tail 200
+

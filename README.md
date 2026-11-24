@@ -76,4 +76,7 @@ Interface and accessibility tests (Playwright and axe-core) run against invented
 
 ## Deployment
 
-Production runs as one Docker Compose stack behind Caddy (automatic HTTPS). Step-by-step guide for an Oracle Cloud Always Free server: [docs/06-deployment-oracle.md](docs/06-deployment-oracle.md).
+Two documented setups:
+
+- **Render + Neon, no payment method needed (chosen):** [docs/07-deployment-render-neon.md](docs/07-deployment-render-neon.md).
+- **One Oracle Cloud Always Free server** with Docker Compose behind Caddy: [docs/06-deployment-oracle.md](docs/06-deployment-oracle.md).

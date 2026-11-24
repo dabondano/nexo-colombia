@@ -1,0 +1,34 @@
+# Weekly synchronization of every dataset into the production database (Neon),
+# for hosting without a server of our own (docs/07-deployment-render-neon.md).
+# Needs the repository secret NEXO_DATABASE_URL. Scheduled runs use the default branch.
+name: Data sync
+
+on:
+  schedule:
+    - cron: "30 8 * * 0" # Sundays 08:30 UTC (03:30 in Bogotá)
+  workflow_dispatch:
+
+concurrency:
+  group: production-database
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEXO_DATABASE_URL: ${{ secrets.NEXO_DATABASE_URL }}
+    steps:
+      - name: Check the secret is set
+        run: test -n "$NEXO_DATABASE_URL" || { echo "Set the NEXO_DATABASE_URL secret."; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Migrations
+        working-directory: backend
+        run: uv sync --frozen --no-dev && uv run --no-dev alembic upgrade head
+      - name: Synchronize all datasets
+        working-directory: backend
+        run: uv run --no-dev python -m app.ingestion.cli all
+      - name: Rebuild the search index
+        working-directory: backend
+        run: uv run --no-dev python -m app.search.reindex

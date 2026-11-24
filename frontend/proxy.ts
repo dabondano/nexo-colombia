@@ -6,6 +6,7 @@ import {
   representativePath,
 } from "@/lib/api";
 import { LESSONS } from "@/lib/lessons";
+import { FixedWindowLimiter, clientIp, isStaffForm } from "@/lib/rate-limit";
 
 // Same name as in lib/staff.ts, which is server-only and cannot be imported here.
 const SESSION_COOKIE = "nexo_sesion";
@@ -57,8 +58,20 @@ function notFoundResponse(request: NextRequest): NextResponse {
   return NextResponse.rewrite(new URL("/_registro-no-encontrado", request.url));
 }
 
+const staffFormLimiter = new FixedWindowLimiter();
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (isStaffForm(request.method, pathname)) {
+    const ip = clientIp(request.headers);
+    if (ip !== null && !staffFormLimiter.allow(ip)) {
+      return new NextResponse("Demasiados intentos. Espere un minuto y vuelva a intentarlo.", {
+        status: 429,
+        headers: { "Retry-After": "60", "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+  }
 
   // Optimistic check only: every panel page and the API verify the session again.
   if (pathname === "/panel" || pathname.startsWith("/panel/")) {
@@ -86,6 +99,7 @@ export const config = {
     "/presupuesto/:codigo",
     "/constitucion/:clave",
     "/aprender/:leccion",
+    "/ingresar",
     "/panel",
     "/panel/:path*",
   ],

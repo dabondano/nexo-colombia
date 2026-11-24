@@ -1,0 +1,22 @@
+# Render Blueprint: one free web service running the web application and the API
+# (docs/07-deployment-render-neon.md). The database is on Neon; its connection
+# string is entered in Render's dashboard, never in this file.
+services:
+  - type: web
+    name: nexo-colombia
+    runtime: docker
+    plan: free
+    # Same area as the Neon database (AWS us-east-1), so each page's queries stay close.
+    region: virginia
+    branch: main
+    dockerfilePath: ./deploy/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: NEXO_DATABASE_URL
+        sync: false
+      - key: NEXO_ENVIRONMENT
+        value: production
+      # Cloudflare, in front of every Render service, sets this header; visitors cannot forge it.
+      - key: NEXO_CLIENT_IP_HEADER
+        value: true-client-ip
