@@ -98,6 +98,7 @@ def test_institution_detail_carries_label_quality_and_provenance(
 ) -> None:
     listed = client.get(f"{API}/institutions", params={"q": "ministerio"}).json()["items"][0]
     body = client.get(f"{API}/institutions/{listed['id']}").json()
+    assert client.head(f"{API}/institutions/{listed['id']}").status_code == 200
 
     assert body["name"] == "MINISTERIO DE EJEMPLO Y PROTECCIÓN SOCIAL"
     assert body["epistemic_label"] == "hecho_documentado"
@@ -144,6 +145,7 @@ def test_initiative_detail_carries_label_and_provenance(
 ) -> None:
     listed = client.get(f"{API}/initiatives", params={"q": "educacion"}).json()["items"][0]
     body = client.get(f"{API}/initiatives/{listed['id']}").json()
+    assert client.head(f"{API}/initiatives/{listed['id']}").status_code == 200
 
     assert body["camara_number"] == "001/2026C"
     assert body["camara_filed_on"] == "2026-07-20"
@@ -157,6 +159,9 @@ def test_unknown_records_and_invalid_paging(client: TestClient, session: Session
     missing = uuid.uuid4()
     assert client.get(f"{API}/institutions/{missing}").status_code == 404
     assert client.get(f"{API}/initiatives/{missing}").status_code == 404
+    assert client.head(f"{API}/institutions/{missing}").status_code == 404
+    assert client.head(f"{API}/initiatives/{missing}").status_code == 404
+    assert client.head(f"{API}/institutions/no-es-un-id").status_code == 422
     assert client.get(f"{API}/institutions", params={"limit": 1000}).status_code == 422
     assert client.get(f"{API}/initiatives", params={"offset": -1}).status_code == 422
 

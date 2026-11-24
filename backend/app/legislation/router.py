@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -93,6 +93,15 @@ def initiative_filters(session: SessionDep) -> InitiativeFilters:
         commission=filter_options(session, initiative.commission),
         origin_chamber=filter_options(session, initiative.origin_chamber),
     )
+
+
+@router.head("/{initiative_id}", include_in_schema=False)
+def initiative_exists(initiative_id: uuid.UUID, session: SessionDep) -> Response:
+    """Existence check without the record body, used by the web app to answer 404 early."""
+    found = session.scalar(
+        select(LegislativeInitiative.id).where(LegislativeInitiative.id == initiative_id)
+    )
+    return Response(status_code=200 if found else 404)
 
 
 @router.get("/{initiative_id}", response_model=InitiativeOut)

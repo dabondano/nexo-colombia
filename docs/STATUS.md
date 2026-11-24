@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-17 (after M3)
+Last updated: 2026-11-18 (after M3, reproduction check and 404 fix)
 
 ## Completed work
 
@@ -40,7 +40,9 @@ Last updated: 2026-11-17 (after M3)
 | Web pages "Constitución" (outline with edition note and review marks) and article page (wording, notes, earlier wording and struck words shown apart, warning, neighbours, provenance) | Implementado | Builds and lints; exercised in a browser against the loaded text (outline counts, articles 11, 12 and 231, preamble, missing article, search, phone width, no console errors); no automated UI tests yet |
 | First learning path "Aprender" (two lessons: how the State is organized, how a law is made; glossary and review questions), every statement labelled and linked to its articles | Implementado (draft) | Every one of the 38 links checked in a browser and resolving to the right article; **content not yet reviewed by a legally qualified person** (A-007) |
 | CI workflow (backend lint, types, tests; frontend lint, build) | Integrado | `.github/workflows/ci.yml`; runs on every pull request |
-| Docker Compose stack and API image | Implementado | Written but **not run**: no Docker daemon was available in the build workspace |
+| Docker Compose stack and API image | Implementado | Written but **not run**: on 2026-11-17 no Docker daemon was available; on 2026-11-18 the daemon ran but Docker Hub was not reachable from the workspace, so the `python` and `postgres` images could not be pulled |
+| Reproduction from a clean workspace (2026-11-18) | Probado | Fresh clone, empty PostgreSQL 16: migrations, source registry, `python -m app.ingestion.cli all` from the live sources (entities 6,404 loaded, 0 rejected; bills 6,605 loaded, 1 rejected; Constitution 448 rows, 0 rejected), `python -m app.search.reindex` (13,393 documents), 77 backend tests, lint, types, frontend lint and build: all identical to the M3 figures |
+| Record pages answer HTTP 404 for unknown records | Probado | `frontend/proxy.ts` asks the API with a HEAD request (new HEAD routes on the institution, initiative and provision detail endpoints, covered in `test_records_api.py` and `test_constitution.py`) before the page renders; unknown lessons answer 404 from the lesson list. Checked against the loaded data: existing records 200, unknown or malformed identifiers 404 with `noindex`, client navigation 404; if the API is down the page still renders and says so (200) |
 
 Module status: **Legislación**, **Instituciones** and **Observatorio** each have a first working part (Constitution explorer and bill registry; entity directory; unified search over all three). **Academia** has a first draft learning path awaiting legal review. Every other part of those modules, and the modules Recursos Públicos and Análisis Político, remain **Diseñado**. Nothing is deployed: the data above exists only in the development database of the build workspace and must be loaded again wherever the platform is installed (`python -m app.ingestion.cli all`, about one minute).
 
@@ -67,7 +69,7 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 - Bill status is the one published in the dataset (last updated by the source on 2026-09-17) and may lag behind actual proceedings.
 - Search matches words and their plurals only: "educación" does not find "educativo". Results are ordered by text match alone.
 - A database that already holds records must rebuild its search index once after this version is installed (`python -m app.search.reindex`), so that title matches are listed first; new loads index records as they are published.
-- A record page for an unknown identifier shows "Página no encontrada" but answers with HTTP status 200, because the page shell is sent before the record is looked up. Not yet addressed.
+- Record pages for unknown identifiers now answer 404 (fixed 2026-11-18). Each record page request costs one extra lightweight HEAD request to the API. When the API is unreachable the check lets the request through, so the page shows its connection notice with status 200.
 
 ## Architectural decisions
 

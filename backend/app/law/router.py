@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -105,6 +105,17 @@ def _neighbour(session: Session, provision: LegalProvision, *, after: bool) -> P
     return _ref(session.scalar(statement.limit(1)))
 
 
+@instruments_router.head("/{slug}/provisions/{path:path}", include_in_schema=False)
+def provision_exists(slug: str, path: str, session: SessionDep) -> Response:
+    """Existence check without the provision body, used by the web app to answer 404 early."""
+    found = session.scalar(
+        select(LegalProvision.id)
+        .join(LegalInstrument, LegalInstrument.id == LegalProvision.instrument_id)
+        .where(LegalInstrument.slug == slug, LegalProvision.path == path)
+    )
+    return Response(status_code=200 if found else 404)
+
+
 @instruments_router.get("/{slug}/provisions/{path:path}", response_model=ProvisionOut)
 def get_provision_by_path(slug: str, path: str, session: SessionDep) -> ProvisionOut:
     """A provision by its stable key, e.g. `articulo-11`: addresses that survive a reload."""
@@ -116,6 +127,13 @@ def get_provision_by_path(slug: str, path: str, session: SessionDep) -> Provisio
     if provision is None:
         raise HTTPException(status_code=404, detail="Disposición no encontrada")
     return _provision_out(session, provision)
+
+
+@provisions_router.head("/{provision_id}", include_in_schema=False)
+def provision_id_exists(provision_id: uuid.UUID, session: SessionDep) -> Response:
+    """Existence check without the provision body, used by the web app to answer 404 early."""
+    found = session.scalar(select(LegalProvision.id).where(LegalProvision.id == provision_id))
+    return Response(status_code=200 if found else 404)
 
 
 @provisions_router.get("/{provision_id}", response_model=ProvisionOut)

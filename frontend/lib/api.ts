@@ -223,6 +223,24 @@ async function getJson<T>(path: string, params: Params = {}): Promise<ApiResult<
   }
 }
 
+/**
+ * Asks the API whether a record exists, without loading it (HTTP HEAD).
+ * Returns false only when the API says the record does not exist (404, or 422 for a
+ * malformed identifier); any other answer or a connection failure returns true, so the
+ * page still renders and explains the problem itself.
+ */
+export async function recordExists(path: string): Promise<boolean> {
+  try {
+    const response = await fetch(new URL(`/api/v1${path}`, apiBaseUrl()), {
+      method: "HEAD",
+      signal: AbortSignal.timeout(2000),
+    });
+    return !(response.status === 404 || response.status === 422);
+  } catch {
+    return true;
+  }
+}
+
 export const fetchSources = () => getJson<Source[]>("/sources");
 
 export const fetchInstitutions = (params: Params) =>
@@ -247,9 +265,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * A provision of the Constitution by its stable key ("articulo-11"), or by its
  * record id, which search results use.
  */
-export const fetchConstitutionProvision = (key: string) =>
+export const constitutionProvisionPath = (key: string) =>
   UUID.test(key)
-    ? getJson<Provision>(`/provisions/${encodeURIComponent(key)}`)
-    : getJson<Provision>(`/instruments/${CONSTITUTION_SLUG}/provisions/${encodeURIComponent(key)}`);
+    ? `/provisions/${encodeURIComponent(key)}`
+    : `/instruments/${CONSTITUTION_SLUG}/provisions/${encodeURIComponent(key)}`;
+export const fetchConstitutionProvision = (key: string) =>
+  getJson<Provision>(constitutionProvisionPath(key));
 
 export const fetchSearch = (params: Params) => getJson<SearchPage>("/search", params);

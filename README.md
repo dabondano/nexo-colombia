@@ -8,7 +8,7 @@ NEXO Colombia is a legal intelligence, public institutional research, civic educ
 
 ## Status
 
-**Milestone M2 (browse and search).** The platform loads two official datasets from datos.gov.co, the directory of public entities (Función Pública) and the bills registry of the Cámara de Representantes, shows them in pages where every record links to its source, and searches both from one box on every page. Everything else is still at the design stage, and nothing is deployed. See [docs/STATUS.md](docs/STATUS.md).
+**Milestone M3 (Constitution explorer and first learning path).** The platform loads the directory of public entities (Función Pública) and the bills registry of the Cámara de Representantes from datos.gov.co, and the text of the Constitution from Función Pública. It shows them in pages where every record links to its source, searches all three from one box on every page, and offers a first draft learning path awaiting legal review. Everything else is still at the design stage, and nothing is deployed. See [docs/STATUS.md](docs/STATUS.md).
 
 Status stages used in this project: Diseñado → Implementado → Probado → Integrado → Desplegado.
 
