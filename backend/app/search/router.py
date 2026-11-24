@@ -7,17 +7,20 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import Session
 
+from app.budget.models import BudgetExecution
 from app.core.db import get_session
 from app.core.listing import DEFAULT_LIMIT, LimitParam, OffsetParam
 from app.ingestion.text import normalize_for_search
-from app.search.indexing import RECORD_TYPES, TEXT_CONFIG
+from app.search.indexing import BUDGET_ENTITY, RECORD_TYPES, TEXT_CONFIG
 from app.search.models import SearchDocument
 from app.search.schemas import SearchHit, SearchPage, TypeCount
 
 router = APIRouter(prefix="/search", tags=["search"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
-RecordType = Literal["legal_provision", "legislative_initiative", "representative", "institution"]
+RecordType = Literal[
+    "legal_provision", "legislative_initiative", "representative", "institution", "budget_entity"
+]
 
 assert set(RecordType.__args__) == set(RECORD_TYPES)  # type: ignore[attr-defined]
 
@@ -84,11 +87,25 @@ def search(
         .limit(limit)
         .offset(offset)
     ).all()
+    budget_ids = [row.record_id for row in rows if row.record_type == BUDGET_ENTITY]
+    budget_codes: dict[Any, str] = {
+        line_id: code
+        for line_id, code in session.execute(
+            select(BudgetExecution.id, BudgetExecution.entity_code).where(
+                BudgetExecution.id.in_(budget_ids)
+            )
+        )
+    }
+    items = []
+    for row in rows:
+        hit = SearchHit.model_validate(row)
+        hit.record_key = budget_codes.get(row.record_id, str(row.record_id))
+        items.append(hit)
     return SearchPage(
         query=text,
         total=total,
         limit=limit,
         offset=offset,
         counts=counts,
-        items=[SearchHit.model_validate(row) for row in rows],
+        items=items,
     )

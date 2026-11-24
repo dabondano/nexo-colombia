@@ -4,6 +4,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict
 
+from app.budget.links import LINK_RULE
 from app.core.labels import EpistemicLabel
 from app.core.listing import FilterOption
 from app.core.provenance import ProvenanceOut
@@ -25,6 +26,11 @@ class InstitutionSummary(BaseModel):
     data_quality_status: str
 
 
+class LinkedBudgetEntityOut(BaseModel):
+    entity_code: str
+    entity_name: str
+
+
 class InstitutionOut(InstitutionSummary):
     nit: str | None
     level: str | None
@@ -34,6 +40,10 @@ class InstitutionOut(InstitutionSummary):
     latitude: float | None
     status: str | None
     jurisdiction_code: str
+    # An analytical association computed by NEXO (A-014), not part of the directory.
+    budget_entity: LinkedBudgetEntityOut | None = None
+    budget_entity_label: EpistemicLabel = EpistemicLabel.HIPOTESIS_ANALITICA
+    budget_entity_rule: str = LINK_RULE
     # Directory data copied from an official database (brief section 2.1).
     epistemic_label: EpistemicLabel = EpistemicLabel.HECHO_DOCUMENTADO
     provenance: ProvenanceOut

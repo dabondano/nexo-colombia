@@ -9,12 +9,17 @@ first, so never point this at a database with real data.
 
 import os
 import sys
+from datetime import date
+from decimal import Decimal
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.auth.models import Role, UserAccount
 from app.auth.security import hash_password
+from app.budget.history import record_snapshots
+from app.budget.links import index_budget_entities, link_budget_institutions
+from app.budget.models import BudgetSnapshot
 from app.core.db import CORE_SCHEMA, SEARCH_SCHEMA, get_engine
 from app.ingestion.datasets import bills, budget, constitution, entities, representatives
 from app.ingestion.pipeline import run_sync
@@ -39,7 +44,7 @@ def seed(session: Session) -> None:
         text(
             f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.relationship, "
             f"{CORE_SCHEMA}.content_review, {CORE_SCHEMA}.auth_session, {CORE_SCHEMA}.audit_event, "
-            f"{CORE_SCHEMA}.budget_execution, "
+            f"{CORE_SCHEMA}.budget_execution, {CORE_SCHEMA}.budget_snapshot, "
             f"{CORE_SCHEMA}.user_account, "
             f"{CORE_SCHEMA}.position_holding, {CORE_SCHEMA}.person, "
             f"{CORE_SCHEMA}.provision_version, {CORE_SCHEMA}.legal_provision, "
@@ -62,6 +67,8 @@ def seed(session: Session) -> None:
                 sector="SALUD Y PROTECCIÓN SOCIAL",
                 departamento="BOGOTÁ D.C",
             ),
+            # Same name as a budget entity: linked by rule A-014.
+            entity_row("9003", nombre="Agencia de Ejemplo"),
             *(entity_row(str(9100 + n), nombre=f"ENTIDAD DE EJEMPLO {n:02d}") for n in range(30)),
         ],
     )
@@ -109,6 +116,22 @@ def seed(session: Session) -> None:
         ],
     )
     link_authors(session)
+    link_budget_institutions(session)
+    index_budget_entities(session)
+    record_snapshots(session)
+    # An earlier source update, so the history table has a change to show.
+    session.add(
+        BudgetSnapshot(
+            entity_code="99-01-00",
+            entity_name="AGENCIA DE EJEMPLO",
+            published_on=date(2026, 10, 7),
+            appropriation=Decimal(2000000),
+            commitments=Decimal(1200000),
+            obligations=Decimal(700000),
+            payments=Decimal(500000),
+            line_count=2,
+        )
+    )
     for email, name, role in STAFF:
         session.add(
             UserAccount(

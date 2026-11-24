@@ -7,12 +7,14 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.budget.links import budget_entity_for_institution
 from app.catalog.models import Institution
 from app.catalog.schemas import (
     InstitutionFilters,
     InstitutionOut,
     InstitutionPage,
     InstitutionSummary,
+    LinkedBudgetEntityOut,
 )
 from app.core.db import get_session
 from app.core.listing import (
@@ -103,5 +105,10 @@ def get_institution(institution_id: uuid.UUID, session: SessionDep) -> Instituti
         latitude=institution.latitude,
         status=institution.status,
         jurisdiction_code=institution.jurisdiction_code,
+        budget_entity=(
+            LinkedBudgetEntityOut(entity_code=linked.entity_code, entity_name=linked.entity_name)
+            if (linked := budget_entity_for_institution(session, institution.id))
+            else None
+        ),
         provenance=load_provenance(session, institution.source_record_id),
     )

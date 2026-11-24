@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { AssociationNote } from "@/components/AssociationNote";
 import { Field, NOT_IN_SOURCE, Notice } from "@/components/Notice";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
 import { fetchInstitution } from "@/lib/api";
@@ -63,6 +64,27 @@ async function InstitutionRecord({ params }: { params: Promise<{ id: string }> }
           </Field>
         </dl>
       </section>
+
+      {entity.budget_entity ? (
+        <section
+          aria-labelledby="titulo-presupuesto"
+          className="rounded border border-rule bg-surface p-5"
+        >
+          <h2 id="titulo-presupuesto" className="text-xl font-semibold">
+            Presupuesto
+          </h2>
+          <p className="mt-3 text-sm">
+            <Link
+              href={`/presupuesto/${encodeURIComponent(entity.budget_entity.entity_code)}`}
+              className="text-brand underline underline-offset-4"
+            >
+              Ejecución presupuestal de {entity.budget_entity.entity_name}
+            </Link>{" "}
+            <span className="text-ink-muted">(código {entity.budget_entity.entity_code})</span>
+          </p>
+          <AssociationNote label={entity.budget_entity_label} rule={entity.budget_entity_rule} />
+        </section>
+      ) : null}
 
       <ProvenancePanel
         provenance={entity.provenance}

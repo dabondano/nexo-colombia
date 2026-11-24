@@ -5,7 +5,8 @@ commitments, obligations and payments divided by the current appropriation.
 Lists are alphabetical; nothing is ranked.
 """
 
-from datetime import datetime
+import uuid
+from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Annotated, Any
 
@@ -14,7 +15,9 @@ from pydantic import BaseModel
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import Session
 
-from app.budget.models import BudgetExecution
+from app.budget.history import HISTORY_NOTE
+from app.budget.links import LINK_RULE, institution_for_budget_entity
+from app.budget.models import BudgetExecution, BudgetSnapshot
 from app.core.db import get_session
 from app.core.labels import DataQualityStatus, EpistemicLabel
 from app.core.listing import (
@@ -135,8 +138,26 @@ class BudgetLine(BaseModel):
     data_quality_status: str
 
 
+class LinkedInstitutionOut(BaseModel):
+    institution_id: uuid.UUID
+    name: str
+
+
+class SnapshotOut(BaseModel):
+    published_on: date
+    amounts: Amounts
+    rates: Rates
+
+
 class EntityBudgetOut(EntityBudget):
     sector_code: str | None
+    # An analytical association computed by NEXO (A-014), not part of the source.
+    linked_institution: LinkedInstitutionOut | None = None
+    linked_institution_label: EpistemicLabel = EpistemicLabel.HIPOTESIS_ANALITICA
+    linked_institution_rule: str = LINK_RULE
+    # Totals per source update date, oldest first (A-011: not a fiscal period).
+    history: list[SnapshotOut] = []
+    history_note: str = HISTORY_NOTE
     lines: list[BudgetLine]
     data_quality_status: str
     epistemic_label: EpistemicLabel = EpistemicLabel.HECHO_DOCUMENTADO
@@ -312,5 +333,31 @@ def get_entity(entity_code: CodeParam, session: SessionDep) -> EntityBudgetOut:
         data_quality_status=min(
             (record.data_quality_status for record in records), key=QUALITY_ORDER.index
         ),
+        linked_institution=(
+            LinkedInstitutionOut(institution_id=linked.institution_id, name=linked.name)
+            if (linked := institution_for_budget_entity(session, first.entity_code))
+            else None
+        ),
+        history=[_snapshot(snapshot) for snapshot in _history(session, first.entity_code)],
         provenance=load_provenance(session, latest.source_record_id),
     )
+
+
+def _history(session: Session, entity_code: str) -> list[BudgetSnapshot]:
+    return list(
+        session.scalars(
+            select(BudgetSnapshot)
+            .where(BudgetSnapshot.entity_code == entity_code)
+            .order_by(BudgetSnapshot.published_on)
+        )
+    )
+
+
+def _snapshot(snapshot: BudgetSnapshot) -> SnapshotOut:
+    amounts = Amounts(
+        appropriation=snapshot.appropriation,
+        commitments=snapshot.commitments,
+        obligations=snapshot.obligations,
+        payments=snapshot.payments,
+    )
+    return SnapshotOut(published_on=snapshot.published_on, amounts=amounts, rates=_rates(amounts))

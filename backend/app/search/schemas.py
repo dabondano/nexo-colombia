@@ -11,6 +11,9 @@ class SearchHit(BaseModel):
 
     record_type: str
     record_id: uuid.UUID
+    # The key in the record's public address: its id, or the budget code for a
+    # budget entity (whose pages are addressed by code).
+    record_key: str = ""
     title: str
     summary: str | None
     record_date: date | None

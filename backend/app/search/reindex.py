@@ -47,6 +47,10 @@ def reindex(session: Session) -> int:
     for provision, instrument, text in session.execute(provisions).yield_per(1000):
         index_entry(session, provision_entry(provision, instrument, text))
         count += 1
+    # Imported here: app.budget.links imports this package's indexing module.
+    from app.budget.links import index_budget_entities
+
+    count += index_budget_entities(session)
     session.commit()
     return count
 
