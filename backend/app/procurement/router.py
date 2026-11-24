@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.catalog.mappings import MANUAL_RULE, EntityMapping, MappingKind, contract_key
 from app.catalog.models import Institution
 from app.core.config import get_settings
 from app.core.db import get_session
@@ -27,7 +28,7 @@ from app.core.listing import (
 )
 from app.core.provenance import load_provenance
 from app.ingestion.datasets.contracts import window_start
-from app.procurement.links import LINK_RULE
+from app.procurement.links import LINK_RULE, REVIEW_METHOD
 from app.procurement.models import Contract
 from app.procurement.schemas import (
     SUPPLIER_LABELS,
@@ -113,6 +114,18 @@ def contract_filters(session: SessionDep) -> ContractFilters:
     )
 
 
+def _institution_rule(session: Session, contract: Contract) -> str:
+    if contract.institution_link_method != REVIEW_METHOD:
+        return LINK_RULE
+    note = session.scalar(
+        select(EntityMapping.note).where(
+            EntityMapping.kind == MappingKind.CONTRACT_ENTITY.value,
+            EntityMapping.source_value == contract_key(contract.entity_nit, contract.entity_name),
+        )
+    )
+    return MANUAL_RULE.format(note=note or "")
+
+
 @router.head("/{contract_id}", include_in_schema=False)
 def contract_exists(contract_id: uuid.UUID, session: SessionDep) -> Response:
     """Existence check without the record body, used by the web app to answer 404 early."""
@@ -138,7 +151,7 @@ def get_contract(contract_id: uuid.UUID, session: SessionDep) -> ContractOut:
             if institution
             else None
         ),
-        institution_rule=LINK_RULE,
+        institution_rule=_institution_rule(session, contract),
         department=contract.department,
         city=contract.city,
         sector=contract.sector,

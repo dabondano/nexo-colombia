@@ -21,6 +21,7 @@ from sqlalchemy import ColumnElement, delete, select
 from sqlalchemy.orm import Session
 
 from app.budget.models import BudgetExecution
+from app.catalog.mappings import MANUAL_RULE, EntityMapping, MappingKind
 from app.catalog.models import Institution
 from app.core.db import get_engine
 from app.core.labels import ConfidenceClass, EpistemicLabel
@@ -31,6 +32,7 @@ from app.search.models import SearchDocument
 
 PREDICATE = "has_budget_line"
 METHOD_NOTE = "nombre_exacto: coincidencia exacta y única con una entidad del directorio (A-014)"
+MANUAL_METHOD = "revision_manual: vínculo revisado por el equipo de datos (A-017)"
 LINK_RULE = (
     "Vínculo calculado por NEXO: el nombre de la entidad en el presupuesto coincide exactamente "
     "(sin contar mayúsculas, tildes ni signos) con el de una sola entidad del directorio de "
@@ -43,12 +45,21 @@ LINK_RULE = (
 class LinkedInstitution:
     institution_id: uuid.UUID
     name: str
+    rule: str
 
 
 @dataclass(frozen=True)
 class LinkedBudgetEntity:
     entity_code: str
     entity_name: str
+    rule: str
+
+
+def rule_for(method_note: str | None, evidence: str | None) -> str:
+    """The rule a link was made by, as shown to readers."""
+    if method_note == MANUAL_METHOD:
+        return MANUAL_RULE.format(note=evidence or "")
+    return LINK_RULE
 
 
 def _public_links() -> list[ColumnElement[bool]]:
@@ -62,40 +73,57 @@ def _public_links() -> list[ColumnElement[bool]]:
 
 def institution_for_budget_entity(session: Session, entity_code: str) -> LinkedInstitution | None:
     row = session.execute(
-        select(Institution.id, Institution.name)
+        select(Institution.id, Institution.name, Relationship.method_note, Relationship.evidence)
         .join(Relationship, Relationship.subject_id == Institution.id)
         .join(BudgetExecution, BudgetExecution.id == Relationship.object_id)
         .where(BudgetExecution.entity_code == entity_code, *_public_links())
         .limit(1)
     ).first()
-    return LinkedInstitution(institution_id=row[0], name=row[1]) if row else None
+    if row is None:
+        return None
+    return LinkedInstitution(institution_id=row[0], name=row[1], rule=rule_for(row[2], row[3]))
 
 
 def budget_entity_for_institution(
     session: Session, institution_id: uuid.UUID
 ) -> LinkedBudgetEntity | None:
     row = session.execute(
-        select(BudgetExecution.entity_code, BudgetExecution.entity_name)
+        select(
+            BudgetExecution.entity_code,
+            BudgetExecution.entity_name,
+            Relationship.method_note,
+            Relationship.evidence,
+        )
         .join(Relationship, Relationship.object_id == BudgetExecution.id)
         .where(Relationship.subject_id == institution_id, *_public_links())
         .order_by(BudgetExecution.entity_code)
         .limit(1)
     ).first()
-    return LinkedBudgetEntity(entity_code=row[0], entity_name=row[1]) if row else None
+    if row is None:
+        return None
+    return LinkedBudgetEntity(entity_code=row[0], entity_name=row[1], rule=rule_for(row[2], row[3]))
 
 
 @dataclass(frozen=True)
 class LinkResult:
     budget_entities: int
     linked: int
+    reviewed: int = 0
 
 
 def link_budget_institutions(session: Session) -> LinkResult:
     session.execute(
         delete(Relationship).where(
-            Relationship.predicate == PREDICATE, Relationship.method_note == METHOD_NOTE
+            Relationship.predicate == PREDICATE,
+            Relationship.method_note.in_((METHOD_NOTE, MANUAL_METHOD)),
         )
     )
+    reviewed = {
+        mapping.source_value: mapping
+        for mapping in session.scalars(
+            select(EntityMapping).where(EntityMapping.kind == MappingKind.BUDGET_ENTITY.value)
+        )
+    }
     by_name: dict[str, list[uuid.UUID]] = defaultdict(list)
     for institution_id, name in session.execute(select(Institution.id, Institution.name)):
         by_name[normalize_name(name)].append(institution_id)
@@ -104,30 +132,36 @@ def link_budget_institutions(session: Session) -> LinkResult:
     for line in session.scalars(select(BudgetExecution)):
         lines[line.entity_code].append(line)
 
-    linked = 0
-    for entity_lines in lines.values():
+    linked = reviewed_links = 0
+    for code, entity_lines in lines.items():
         name = entity_lines[0].entity_name
-        matches = by_name.get(normalize_name(name), [])
-        if len(matches) != 1:
-            continue
+        mapping = reviewed.get(code)
+        if mapping is not None:
+            target, method, evidence = mapping.institution_id, MANUAL_METHOD, mapping.note
+            reviewed_links += 1
+        else:
+            matches = by_name.get(normalize_name(name), [])
+            if len(matches) != 1:
+                continue
+            target, method, evidence = matches[0], METHOD_NOTE, name
         linked += 1
         for line in entity_lines:
             session.add(
                 Relationship(
                     subject_type="institution",
-                    subject_id=matches[0],
+                    subject_id=target,
                     predicate=PREDICATE,
                     object_type="budget_execution",
                     object_id=line.id,
                     confidence_class=ConfidenceClass.ANALYTICAL_ASSOCIATION.value,
                     epistemic_label=EpistemicLabel.HIPOTESIS_ANALITICA.value,
                     source_record_id=line.source_record_id,
-                    method_note=METHOD_NOTE,
-                    evidence=name,
+                    method_note=method,
+                    evidence=evidence,
                 )
             )
     session.commit()
-    return LinkResult(budget_entities=len(lines), linked=linked)
+    return LinkResult(budget_entities=len(lines), linked=linked, reviewed=reviewed_links)
 
 
 def index_budget_entities(session: Session) -> int:

@@ -60,7 +60,7 @@ def seed(session: Session) -> None:
             f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.relationship, "
             f"{CORE_SCHEMA}.content_review, {CORE_SCHEMA}.auth_session, {CORE_SCHEMA}.audit_event, "
             f"{CORE_SCHEMA}.budget_execution, {CORE_SCHEMA}.budget_snapshot, "
-            f"{CORE_SCHEMA}.contract, "
+            f"{CORE_SCHEMA}.contract, {CORE_SCHEMA}.entity_mapping, "
             f"{CORE_SCHEMA}.user_account, "
             f"{CORE_SCHEMA}.position_holding, {CORE_SCHEMA}.person, "
             f"{CORE_SCHEMA}.provision_version, {CORE_SCHEMA}.legal_provision, "

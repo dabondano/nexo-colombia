@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.router import admin_router, auth_router
 from app.budget.router import router as budget_router
+from app.catalog.mapping_router import router as mappings_router
 from app.catalog.router import router as institutions_router
 from app.congress.router import router as representatives_router
 from app.core.config import get_settings
@@ -67,6 +68,7 @@ def create_app() -> FastAPI:
     app.include_router(representatives_router, prefix=API_PREFIX)
     app.include_router(budget_router, prefix=API_PREFIX)
     app.include_router(contracts_router, prefix=API_PREFIX)
+    app.include_router(mappings_router, prefix=API_PREFIX)
     app.include_router(instruments_router, prefix=API_PREFIX)
     app.include_router(provisions_router, prefix=API_PREFIX)
     app.include_router(search_router, prefix=API_PREFIX)

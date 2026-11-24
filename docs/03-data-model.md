@@ -82,6 +82,7 @@ All `core` tables share: `id` (UUID), `jurisdiction_code`, `source_record_id`, `
 | `contract_bidder` | process external id, bidder company/person, awarded (boolean) | |
 | `budget` | institution_id, fiscal_year, budget_item_code, item_name, funding_source | |
 | `budget_execution` | budget_id, as_of, **appropriation**, **commitments**, **obligations**, **payments** | Four separate columns, as in the Ministry of Finance dataset |
+| `entity_mapping` | kind (budget_entity, contract_entity), source_value (budget code, or NIT and normalized name), source_name, institution_id, note, created_by | Built 2026-11-24: links reviewed by the data team (A-017), applied before the automatic rules |
 | `budget_snapshot` | entity_code, **published_on** (the source's update date), the four totals, line_count | Built 2026-11-24: one row per entity and source update, so change between updates can be shown; not a fiscal period (A-011, A-013) |
 | `public_program` | name, institution_id, description | |
 
@@ -101,7 +102,7 @@ All `core` tables share: `id` (UUID), `jurisdiction_code`, `source_record_id`, `
 
 `relationship`: `subject_type`, `subject_id`, `predicate`, `object_type`, `object_id`, `valid_from`, `valid_to`, `confidence_class`, `epistemic_label`, `source_record_id`, `method_note`, `evidence` (the words in the source the link rests on, as published). Built on 2026-11-24 (`backend/app/core/relationships.py`); one link per subject, predicate and object.
 
-Predicates in use: `author_of` (person → legislative_initiative), class `analytical_association`, label `hipotesis_analitica`, made by the exact-name rule A-012; `source_record_id` points to the bill whose list of authors it was read from, `evidence` holds the name as published. `has_budget_line` (institution → budget_execution), same class and label, made by the exact-name rule A-014; one link per budget line of the matched entity, `source_record_id` points to that line's raw record, `evidence` holds the budget entity name as published.
+Predicates in use: `author_of` (person → legislative_initiative), class `analytical_association`, label `hipotesis_analitica`, made by the exact-name rule A-012; `source_record_id` points to the bill whose list of authors it was read from, `evidence` holds the name as published. `has_budget_line` (institution → budget_execution), same class and label, made by the exact-name rule A-014; one link per budget line of the matched entity, `source_record_id` points to that line's raw record, `evidence` holds the budget entity name as published; a link reviewed by the data team (A-017) has method `revision_manual` and the reviewer's reason as evidence.
 
 - `confidence_class`: verified_official · declared · reported · historical · analytical_association · unverified_claim.
 - `epistemic_label`: hecho_documentado · interpretacion_juridica · hipotesis_analitica · simulacion_hipotetica · no_verificado.

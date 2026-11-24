@@ -17,6 +17,8 @@ async function signIn(page: Page, email: string, password = PASSWORD) {
 }
 
 async function expectAccessible(page: Page) {
+  // After a form redirect the new page may still be streaming; wait for its title.
+  await expect(page).toHaveTitle(/\S/);
   const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 }
@@ -147,4 +149,33 @@ test("revisión jurídica: aprobar una lección y pedir cambios en un artículo"
   await expect(page.getByRole("heading", { level: 1, name: /Artículo 11/ })).toBeVisible();
   await expect(page.getByText(note)).toHaveCount(0);
   await expect(page.getByText("Revisión jurídica:")).toHaveCount(0);
+});
+
+test("vínculos entre fuentes: enlazar a mano con motivo y deshacer", async ({ page }, testInfo) => {
+  // Both projects share one sample database; creating the same link twice would collide.
+  test.skip(testInfo.project.name !== "escritorio", "Se prueba una vez, en escritorio.");
+  await signIn(page, STEWARD);
+  await page.getByRole("link", { name: "Vínculos entre fuentes" }).first().click();
+  await expect(page.getByText("Ninguna entidad del directorio tiene exactamente este nombre.")).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole("link", { name: "Vincular MINISTERIO DE EJEMPLO" }).click();
+  await expect(page.getByLabel("Nombre en el directorio")).toHaveValue("MINISTERIO DE EJEMPLO");
+  await page.getByLabel("MINISTERIO DE EJEMPLO Y PROTECCIÓN SOCIAL").check();
+  await page.getByLabel(/En qué se basa el vínculo/).fill("Prueba: mismo ministerio, nombre abreviado en el PGN");
+  await expectAccessible(page);
+  await page.getByRole("button", { name: "Guardar el vínculo" }).click();
+  await expect(page.getByText("Vínculo guardado y aplicado.")).toBeVisible();
+  await expect(page.getByText("Vínculos revisados (1)")).toBeVisible();
+
+  await page.goto("/presupuesto/98-01-00");
+  const linked = page.getByRole("region", { name: "En el directorio de entidades" });
+  await expect(linked.getByText(/revisado por el equipo de datos/)).toBeVisible();
+  await expect(linked.getByText(/nombre abreviado en el PGN/)).toBeVisible();
+
+  await page.goto("/panel/vinculos");
+  await page.getByRole("button", { name: "Eliminar el vínculo de MINISTERIO DE EJEMPLO" }).click();
+  await expect(page.getByText(/Vínculo eliminado/)).toBeVisible();
+  await expect(page.getByText("Vínculos revisados (0)")).toBeVisible();
+  await page.goto("/presupuesto/98-01-00");
+  await expect(page.getByRole("region", { name: "En el directorio de entidades" })).toHaveCount(0);
 });

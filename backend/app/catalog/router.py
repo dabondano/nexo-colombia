@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.budget.links import budget_entity_for_institution
+from app.budget.links import LINK_RULE, budget_entity_for_institution
 from app.catalog.models import Institution
 from app.catalog.schemas import (
     InstitutionFilters,
@@ -111,6 +111,7 @@ def get_institution(institution_id: uuid.UUID, session: SessionDep) -> Instituti
             if (linked := budget_entity_for_institution(session, institution.id))
             else None
         ),
+        budget_entity_rule=linked.rule if linked else LINK_RULE,
         contract_count=session.scalar(
             select(func.count()).where(Contract.institution_id == institution.id)
         )
