@@ -28,7 +28,7 @@ target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     context.configure(
-        url=get_settings().database_url,
+        url=get_settings().owner_database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         include_schemas=True,
@@ -39,7 +39,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    engine = create_engine(get_settings().database_url)
+    engine = create_engine(get_settings().owner_database_url)
     with engine.connect() as connection:
         # The version table lives in the core schema, so it must exist first.
         connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {CORE_SCHEMA}"))

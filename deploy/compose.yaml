@@ -10,8 +10,11 @@ services:
       POSTGRES_USER: nexo
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deploy/.env}
       POSTGRES_DB: nexo
+      NEXO_APP_DB_PASSWORD: ${NEXO_APP_DB_PASSWORD:?Set NEXO_APP_DB_PASSWORD in deploy/.env}
     volumes:
       - db_data:/var/lib/postgresql/data
+      # Creates the restricted application account on the first start.
+      - ./db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nexo -d nexo"]
       interval: 5s
@@ -23,7 +26,8 @@ services:
     restart: unless-stopped
     environment:
       NEXO_ENVIRONMENT: production
-      NEXO_DATABASE_URL: postgresql+psycopg://nexo:${POSTGRES_PASSWORD}@db:5432/nexo
+      NEXO_DATABASE_URL: postgresql+psycopg://nexo_app:${NEXO_APP_DB_PASSWORD}@db:5432/nexo
+      NEXO_MIGRATION_DATABASE_URL: postgresql+psycopg://nexo:${POSTGRES_PASSWORD}@db:5432/nexo
     depends_on:
       db:
         condition: service_healthy

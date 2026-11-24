@@ -138,13 +138,15 @@ jobs:
             echo "NEXO_DOMAIN=localhost"
             echo "ACME_EMAIL=ci@example.org"
             echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)"
+            echo "NEXO_APP_DB_PASSWORD=$(openssl rand -hex 24)"
           } > deploy/.env
       - name: Build and start the stack
         working-directory: deploy
         run: docker compose up -d --build --wait --wait-timeout 300
       - name: Sample data
         working-directory: deploy
-        run: docker compose exec -T api python -m tests.seed_ui --force
+        # As the owner: seeding empties tables, which the application account cannot do.
+        run: docker compose exec -T api sh -c 'NEXO_DATABASE_URL="$NEXO_MIGRATION_DATABASE_URL" python -m tests.seed_ui --force'
       - name: Smoke tests through Caddy
         run: |
           set -euo pipefail
@@ -166,6 +168,22 @@ jobs:
           statuses=$(for i in $(seq 1 12); do code -X POST https://localhost/ingresar; echo; done)
           echo "$statuses" | sort | uniq -c
           echo "$statuses" | grep -q '^429$'
+      - name: The application account cannot rewrite the audit log
+        working-directory: deploy
+        run: |
+          docker compose exec -T api python -c "
+          import sys
+          from sqlalchemy import create_engine, text
+          from app.core.config import get_settings
+          with create_engine(get_settings().database_url).connect() as c:
+              assert c.execute(text('select current_user')).scalar() == 'nexo_app'
+              try:
+                  c.execute(text('TRUNCATE core.audit_event'))
+              except Exception as e:
+                  assert 'permission denied' in str(e), e
+                  sys.exit(0)
+          sys.exit('TRUNCATE was allowed')
+          "
       - name: Backup script
         run: |
           deploy/scripts/backup.sh
@@ -198,16 +216,20 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build
         run: docker build -f deploy/render/Dockerfile -t nexo-render .
+      - name: Restricted application account (created with SQL, as on Neon)
+        run: PGPASSWORD=nexo psql -h localhost -U nexo -d nexo_ui -c "CREATE ROLE nexo_app LOGIN PASSWORD 'nexo_app'"
       - name: Start like Render does
         run: |
           docker run -d --name nexo --network host \
             -e PORT=10000 \
             -e NEXO_ENVIRONMENT=production \
             -e NEXO_CLIENT_IP_HEADER=true-client-ip \
-            -e NEXO_DATABASE_URL=postgresql://nexo:nexo@localhost:5432/nexo_ui \
+            -e NEXO_DATABASE_URL=postgresql://nexo_app:nexo_app@localhost:5432/nexo_ui \
+            -e NEXO_MIGRATION_DATABASE_URL=postgresql://nexo:nexo@localhost:5432/nexo_ui \
             nexo-render
           for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:10000/ && break; sleep 2; done
-          docker exec -w /app/api nexo python -m tests.seed_ui --force
+          docker exec -w /app/api -e NEXO_DATABASE_URL=postgresql://nexo:nexo@localhost:5432/nexo_ui \
+            nexo python -m tests.seed_ui --force
       - name: Smoke tests
         run: |
           set -euo pipefail
@@ -216,6 +238,12 @@ jobs:
           test "$(code http://localhost:10000/presupuesto/99-01-00)" = 200
           test "$(code http://localhost:10000/presupuesto/00-00-00)" = 404
           test "$(code http://localhost:10000/panel)" = 307
+          # The application runs as the restricted account, which cannot rewrite the audit log.
+          for statement in 'TRUNCATE core.audit_event' 'DELETE FROM core.audit_event'; do
+            out=$(PGPASSWORD=nexo_app psql -h localhost -U nexo_app -d nexo_ui -c "$statement" 2>&1 || true)
+            echo "$statement -> $out"
+            echo "$out" | grep -q 'permission denied'
+          done
           # The API listens on 127.0.0.1 inside the container only.
           docker exec nexo python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready')"
           # Per-IP limit on staff forms, keyed on the trusted header.

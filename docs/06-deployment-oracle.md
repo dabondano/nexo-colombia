@@ -68,7 +68,7 @@ security list allows it; `server-setup.sh` opens 80 and 443 there too.
 ssh ubuntu@<public-ip>
 cd nexo-colombia/deploy
 cp .env.example .env
-nano .env        # NEXO_DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD (openssl rand -hex 24)
+nano .env        # NEXO_DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD, NEXO_APP_DB_PASSWORD (openssl rand -hex 24 each)
 chmod 600 .env
 
 docker compose up -d --build --wait     # first build on Arm takes several minutes
@@ -113,6 +113,7 @@ every few minutes also tells you quickly if Oracle stops the server.
   and the staff panel, and 60 on any page; beyond that it answers 429 (ADR-006).
 - The database password lives only in `deploy/.env` (permissions 600, never
   committed). Ubuntu installs security updates automatically.
-- Known gap: the application connects to PostgreSQL as the database owner, so it
-  could truncate the audit table; a separate, narrower role for the application
-  is pending (STATUS).
+- The application connects as `nexo_app` (created on the database's first start by
+  `deploy/db-init/`), which cannot change or delete the audit log, the raw records,
+  the rejected rows or the legal reviews, nor alter tables; the owner account runs
+  only migrations and privileges (`backend/app/core/grants.py`).

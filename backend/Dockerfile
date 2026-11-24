@@ -14,5 +14,7 @@ RUN useradd --create-home nexo
 USER nexo
 
 EXPOSE 8000
-# Migrations run before the server starts; the stack has a single API instance.
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# Migrations run before the server starts (the stack has a single API instance).
+# With NEXO_MIGRATION_DATABASE_URL set, they run as the owner, then the restricted
+# application account gets its privileges (app.core.grants).
+CMD ["sh", "-c", "alembic upgrade head && if [ -n \"$NEXO_MIGRATION_DATABASE_URL\" ]; then python -m app.core.grants; fi && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
