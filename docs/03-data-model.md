@@ -155,7 +155,7 @@ Person → `person` · PublicOfficial → `person` + `position_holding` · Insti
 |---|---|---|
 | Universo de entidades (S-006) | `institution`, `government_branch`, `public_position` + `position_holding` for the listed representative | Fax; personal e-mail if any |
 | Proyectos de Ley, Cámara (S-008) | `legislative_initiative`, `initiative_author` (after name matching), `legislative_term` | Placeholder rows go to `staging` rejects |
-| Ejecución PGN (S-005) | `budget`, `budget_execution` | None |
+| Ejecución PGN (S-005) | `budget_execution` (one row per entity, funding source, funds situation and resource; `budget` per fiscal year waits for a source that states the year) | None |
 | SECOP II contratos (S-001), limited subset | `contract`, `contract_amount`, `company` (legal entities by NIT) | Bank name and account; all natural-person document numbers; legal representative's ID, gender, nationality and address; supervisors' and spending officers' IDs |
 | Representantes 2026-2027 (S-010) | `person`, `position_holding` (party kept as published text until `political_organization` exists; the source has no commissions) | Nothing: the institutional e-mail, office and phone extension are stored and shown, by owner decision of 2026-11-18, as contact details of the office published by the Cámara |
 | Votaciones plenaria Senado (S-009), Phase 5 | `legislative_vote`, `individual_vote` | None; absences and abstentions stay "not recorded in source" |

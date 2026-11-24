@@ -30,8 +30,8 @@ Common properties of datos.gov.co datasets: API endpoint `https://www.datos.gov.
 ### Source S-005: Ejecución Presupuestal del Presupuesto General de la Nación
 - Institution: Ministerio de Hacienda y Crédito Público · IDs `xjxk-qhsc` (by entity, 600 rows) and `bpij-5vy9` (by budget item, 3,856 rows) · Data last updated: 2026-11-07
 - Key fields: sector, entity code and name, `apropiaci_n_vigente`, `compromisos`, `obligaciones`, `pagos`
-- Known limitations: appears to be a current-year snapshot; historical series not yet located
-- Verification status: Verified on 2026-11-17 by API
+- Known limitations: no column for the fiscal year (vigencia) or the cut-off date, only the dataset's update date (monthly); each update replaces the previous figures; historical series not yet located. Labels contain non-breaking spaces
+- Verification status: Verified on 2026-11-17 by API; `xjxk-qhsc` profiled in full on 2026-11-18 (600 rows, 221 entities, unique by entity code, funding source, funds situation and resource; whole pesos, none negative; payments ≤ obligations ≤ commitments ≤ appropriation in every row; total appropriation $543.2 billones) and loaded
 
 ### Source S-006: Universo de entidades
 - Institution: Departamento Administrativo de la Función Pública · ID `h7zv-k39x` · Rows: 6,404 (304 national, 6,100 territorial) · Data last updated: 2026-10-09

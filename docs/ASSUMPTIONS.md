@@ -59,3 +59,8 @@
 - Assumption: a bill author whose published name matches exactly (ignoring case, accents and punctuation) the name of exactly one representative of the 2026-2027 list, on a bill filed from 20 July 2026, is that representative.
 - Reason: rule chosen by the owner on 2026-11-18; the source does not identify authors. On the first run 1,753 of 2,325 author names on 302 bills were linked, none was ambiguous, and only one probable shortened name ("Esneyder Gómez", 10 bills) was left unlinked · Impact if wrong: a bill could be shown under the wrong person. Links are labelled "Hipótesis analítica" and the published text is always shown.
 - Owner/verification: data steward; sample links against the bills' pages at camara.gov.co.
+
+### Assumption A-013
+- Assumption: the budget figures of MinHacienda's dataset (S-005, `xjxk-qhsc`) can be shown without a fiscal year, and execution rates (commitments, obligations and payments divided by the current appropriation) describe progress without judging an entity.
+- Reason: owner decisions of 2026-11-18: state only what the source publishes (pages say the source does not give the year or cut-off date, and show its update date); show amounts and rates with the formula, alphabetical lists, no rankings. The one-line meanings of commitments, obligations and payments are general explanations of the budget stages, not legal definitions · Impact if wrong: readers could compare figures from different cut-off dates; each record shows the source's update date.
+- Owner/verification: data steward; legal reviewer for the wording of the stage explanations.

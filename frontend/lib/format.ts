@@ -83,3 +83,25 @@ export function pageNumber(searchParams: SearchParams): number {
   const page = Number.parseInt(param(searchParams, "pagina") ?? "1", 10);
   return Number.isFinite(page) && page >= 1 ? page : 1;
 }
+
+const pesos = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
+const oneDecimal = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+
+/** Full amount in pesos, as published: "$ 7.548.345.900". */
+export function formatPesos(value: string): string {
+  return `$ ${pesos.format(Number(value))}`;
+}
+
+/** Rounded amount in Colombian usage (billón = un millón de millones). */
+export function formatPesosShort(value: string): string {
+  const amount = Number(value);
+  if (amount >= 1e12) return `$ ${oneDecimal.format(amount / 1e12)} billones`;
+  if (amount >= 1e9) return `$ ${oneDecimal.format(amount / 1e9)} mil millones`;
+  if (amount >= 1e6) return `$ ${oneDecimal.format(amount / 1e6)} millones`;
+  return formatPesos(value);
+}
+
+/** A share between 0 and 1 as a percentage; "No aplica" when there is no appropriation. */
+export function formatRate(value: string | null): string {
+  return value === null ? "No aplica" : `${oneDecimal.format(Number(value) * 100)} %`;
+}

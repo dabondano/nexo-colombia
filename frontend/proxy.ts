@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { constitutionProvisionPath, recordExists, representativePath } from "@/lib/api";
+import {
+  budgetEntityPath,
+  constitutionProvisionPath,
+  recordExists,
+  representativePath,
+} from "@/lib/api";
 import { LESSONS } from "@/lib/lessons";
 
 // Same name as in lib/staff.ts, which is server-only and cannot be imported here.
@@ -36,6 +41,8 @@ function apiPathFor(pathname: string): string | typeof MALFORMED | null {
       return `/institutions/${encodeURIComponent(decoded)}`;
     case "legislacion":
       return `/initiatives/${encodeURIComponent(decoded)}`;
+    case "presupuesto":
+      return budgetEntityPath(decoded);
     case "representantes":
       return representativePath(decoded);
     case "constitucion":
@@ -76,6 +83,7 @@ export const config = {
     "/instituciones/:id",
     "/legislacion/:id",
     "/representantes/:id",
+    "/presupuesto/:codigo",
     "/constitucion/:clave",
     "/aprender/:leccion",
     "/panel",

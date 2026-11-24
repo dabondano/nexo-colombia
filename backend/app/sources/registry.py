@@ -80,7 +80,10 @@ REGISTRY: list[RegistryEntry] = [
         "category": "recursos públicos",
         "update_frequency": None,
         "access_restrictions": None,
-        "known_limitations": "Parece corresponder solo a la vigencia actual.",
+        "known_limitations": (
+            "No indica la vigencia ni la fecha de corte de las cifras; solo la fecha de su "
+            "última actualización (mensual). Cada actualización reemplaza las cifras anteriores."
+        ),
     },
     {
         "dataset_id": "jbjy-vk9h",

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Forbidden, PanelHeader } from "@/components/PanelHeader";
 import { Notice } from "@/components/Notice";
 import { Pagination } from "@/components/Pagination";
+import { ScrollRegion } from "@/components/ScrollRegion";
 import { formatNumber, pageNumber, type SearchParams } from "@/lib/format";
 import { STATUS_LABELS } from "@/lib/staff-labels";
 import { formatTimestamp, requireStaff, staffRequest, type SyncRun } from "@/lib/staff";
@@ -42,7 +43,7 @@ async function Runs({ searchParams }: { searchParams: Promise<SearchParams> }) {
       ) : result.data.total === 0 ? (
         <Notice>Todavía no hay sincronizaciones registradas.</Notice>
       ) : (
-        <div className="overflow-x-auto rounded border border-rule bg-surface">
+        <ScrollRegion label="Tabla de sincronizaciones" className="rounded border border-rule bg-surface">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Sincronizaciones de datos</caption>
             <thead>
@@ -87,7 +88,7 @@ async function Runs({ searchParams }: { searchParams: Promise<SearchParams> }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       )}
       {result.ok ? (
         <Pagination basePath={BASE_PATH} query={{}} page={page} pageSize={PAGE_SIZE} total={result.data.total} />
