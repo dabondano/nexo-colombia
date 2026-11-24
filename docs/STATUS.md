@@ -1,6 +1,6 @@
 # NEXO Colombia — Project Status
 
-Last updated: 2026-11-18 (M4 started: representatives and bill authors)
+Last updated: 2026-11-18 (M4: representatives, bill authors, accessibility pass)
 
 ## Completed work
 
@@ -39,7 +39,9 @@ Last updated: 2026-11-18 (M4 started: representatives and bill authors)
 | Articles in the unified search (wording presented as in force only; records whose title has every word come first, so "artículo 86" finds the article) | Probado | `backend/tests/test_constitution.py`, `test_search.py`; 13,393 documents in the development database |
 | Web pages "Constitución" (outline with edition note and review marks) and article page (wording, notes, earlier wording and struck words shown apart, warning, neighbours, provenance) | Implementado | Builds and lints; exercised in a browser against the loaded text (outline counts, articles 11, 12 and 231, preamble, missing article, search, phone width, no console errors); no automated UI tests yet |
 | First learning path "Aprender" (two lessons: how the State is organized, how a law is made; glossary and review questions), every statement labelled and linked to its articles | Implementado (draft) | Every one of the 38 links checked in a browser and resolving to the right article; **content not yet reviewed by a legally qualified person** (A-007) |
-| CI workflow (backend lint, types, tests; frontend lint, build) | Integrado | `.github/workflows/ci.yml`; runs on every pull request |
+| CI workflow (backend lint, types, tests; frontend lint, build; interface and accessibility tests) | Integrado | `.github/workflows/ci.yml`; runs on every pull request |
+| Automated interface tests (Playwright) of the core flows: header search to a record and its origin, directory filters and paging, bill to author and back, Constitution outline to an article and its neighbours, 404 for unknown records, skip link, visible focus on the header, current section in the navigation | Probado | `frontend/e2e/flows.spec.ts`; desktop and phone sizes; run against invented sample data (`backend/tests/seed_ui.py`) |
+| Accessibility pass, WCAG 2.2 AA (automatic part): axe-core on 16 page types (home, search with and without results, the three directories, a record of each, Constitution outline and article, learning path and a lesson, sources, not-found) at desktop and phone sizes, plus failed requests and console errors | Probado | `frontend/e2e/a11y.spec.ts`: no violations. Manual checks on 2026-11-18: keyboard order and visible focus, reflow at 320 px without horizontal scrolling on four page types. Fixed: focus ring on the dark header was 2.0:1 against its background (now 7.1:1, WCAG 1.4.11); the skip link now moves focus into the content (`main` focusable); the navigation marks the current section (`aria-current`); favicon added |
 | Docker Compose stack and API image | Implementado | Written but **not run**: on 2026-11-17 no Docker daemon was available; on 2026-11-18 the daemon ran but Docker Hub was not reachable from the workspace, so the `python` and `postgres` images could not be pulled |
 | Reproduction from a clean workspace (2026-11-18) | Probado | Fresh clone, empty PostgreSQL 16: migrations, source registry, `python -m app.ingestion.cli all` from the live sources (entities 6,404 loaded, 0 rejected; bills 6,605 loaded, 1 rejected; Constitution 448 rows, 0 rejected), `python -m app.search.reindex` (13,393 documents), 77 backend tests, lint, types, frontend lint and build: all identical to the M3 figures |
 | Representatives (Cámara, período 2026-2027) loaded into `core.person` and `core.position_holding`, with the shifted columns of the source reassigned by content (A-011) | Integrado (development database only) | Run of 2026-11-18: 362 rows seen, 181 loaded, 181 rejected as the second row of a member (kept in `core.sync_reject`); `backend/tests/test_representatives.py` |
@@ -60,7 +62,7 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 - Legal review of the learning path and of the Constitution explorer (A-007, A-009, A-010); name the reviewer.
 - Transitory provisions of the Constitution; laws and decrees; links from a bill to the norm it would change.
 - Compare the Constitution with a consolidated source with validity dates (SUIN-Juriscol) once it answers.
-- Authentication and roles (M4); automated UI and accessibility tests.
+- Authentication, roles and audit log (M4). Accessibility: a screen-reader review (NVDA or VoiceOver) and a review by people who use assistive technology are still pending; automatic checks find only part of the problems.
 - Phase 1 items not yet produced: full user-journey diagrams and detailed ER diagrams per module.
 
 ## Known issues
@@ -70,7 +72,6 @@ Module status: **Legislación**, **Instituciones** and **Observatorio** each hav
 - Hosts not yet allowed: Rama Judicial, Consejo de Estado, Corte Suprema, Registraduría, Imprenta Nacional, Portal de Transparencia Económica.
 - Cámara "Representantes 2026-2027" dataset has misaligned columns and two rows per member; NEXO reassigns the columns and lists the second row of each member among the run's rejects (A-011). Each full load therefore reports 181 rejects.
 - Author links use exact names: "Esneyder Gómez" (10 bills) is probably the representative Esneyder Gómez Salamanca but is not linked (A-012).
-- The site has no favicon, so browsers log a 404 for `/favicon.ico`.
 - Cámara "Proyectos de Ley": in 194 rows the Senate number is published with the text "No Aplica" inserted between every character. NEXO reconstructs the number only when the pattern is exact and the result looks like a bill number, keeps the published value in the raw record, and shows a note on the record page (assumption A-008). One reconstructed value was compared with the bill's page at camara.gov.co and matched; the other 193 were not checked individually.
 - Bill status is the one published in the dataset (last updated by the source on 2026-09-17) and may lag behind actual proceedings.
 - Search matches words and their plurals only: "educación" does not find "educativo". Results are ordered by text match alone.

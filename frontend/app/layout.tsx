@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
+import { MainNav, NavLinks } from "@/components/MainNav";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,15 +13,6 @@ export const metadata: Metadata = {
     "Sistema de Conocimiento e Inteligencia Pública. Comprende el Estado. Explora sus instituciones. Investiga sus decisiones.",
 };
 
-const NAV = [
-  { href: "/", label: "Inicio" },
-  { href: "/aprender", label: "Aprender" },
-  { href: "/constitucion", label: "Constitución" },
-  { href: "/legislacion", label: "Legislación" },
-  { href: "/representantes", label: "Representantes" },
-  { href: "/instituciones", label: "Instituciones" },
-  { href: "/fuentes", label: "Fuentes" },
-];
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -66,21 +59,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   Buscar
                 </button>
               </form>
-              <nav aria-label="Navegación principal">
-                <ul className="flex flex-wrap gap-x-6 gap-y-1 text-base">
-                  {NAV.map((item) => (
-                    <li key={item.href}>
-                      <Link href={item.href} className="underline-offset-4 hover:underline">
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
+              <Suspense fallback={<NavLinks pathname={null} />}>
+                <MainNav />
+              </Suspense>
             </div>
           </div>
         </header>
-        <main id="contenido" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
+        <main
+          id="contenido"
+          tabIndex={-1}
+          className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 focus:outline-none"
+        >
           {children}
         </main>
         <footer className="border-t border-rule">
