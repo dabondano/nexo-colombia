@@ -97,3 +97,40 @@ test("el presupuesto: del total a una entidad, con la nota sobre la vigencia", a
   await expect(page.getByText("80,0 % de la apropiación").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Origen de este registro" })).toBeVisible();
 });
+
+test("el inicio muestra cada conjunto de datos con su cifra y su fuente", async ({ page }) => {
+  await page.goto("/");
+  for (const label of [
+    "Explorar el directorio de instituciones",
+    "Ver los representantes",
+    "Ver el presupuesto",
+  ]) {
+    await expect(page.getByRole("link", { name: label })).toBeVisible();
+  }
+  await expect(page.getByText("entidades públicas", { exact: true })).toBeVisible();
+  // The source of each figure links to the official dataset.
+  const source = page.getByRole("link", { name: "Representantes período 2026-2027" });
+  await expect(source).toHaveAttribute("href", /datos\.gov\.co/);
+});
+
+test("Fuentes lista cada fuente con su enlace oficial", async ({ page }) => {
+  await page.goto("/fuentes");
+  for (const name of ["Representantes período 2026-2027", "Proyectos de Ley"]) {
+    await expect(page.getByRole("link", { name }).first()).toHaveAttribute("href", /^https:\/\//);
+  }
+});
+
+test("una lección: pasos con artículos, glosario y repaso con respuesta", async ({ page }) => {
+  await page.goto("/aprender");
+  await page.getByRole("link", { name: "Cómo está organizado el Estado" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Cómo está organizado el Estado" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^artículo \d+/ }).first()).toHaveAttribute(
+    "href",
+    /^\/constitucion\/articulo-/,
+  );
+  await expect(page.getByRole("heading", { name: "Glosario" })).toBeVisible();
+  const quiz = page.getByRole("region", { name: "Repaso" });
+  const firstAnswer = quiz.getByText("Ver la respuesta").first();
+  await firstAnswer.click();
+  await expect(quiz.locator("details[open]").first()).toContainText("Constitución, artículo");
+});

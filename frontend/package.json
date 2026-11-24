@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
-    "test:unit": "node --test --experimental-strip-types unit/*.test.ts"
+    "test:unit": "node --test --experimental-strip-types unit/*.test.ts",
+    "check:lesson-links": "node --experimental-strip-types scripts/check-lesson-links.mts"
   },
   "dependencies": {
     "next": "16.4.6",
