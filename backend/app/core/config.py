@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     # the last this-many days (owner decision of 2026-11-24, to fit the free
     # database plan). Older contracts are removed from NEXO; SECOP keeps them.
     secop_window_days: int = 90
+    # Storage of the database plan, to warn before it fills (Neon free plan: 0.5 GB).
+    database_size_limit_mb: int = 512
 
     @field_validator("database_url", "migration_database_url")
     @classmethod

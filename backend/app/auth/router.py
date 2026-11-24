@@ -28,7 +28,7 @@ from app.core import audit
 from app.core.audit import AuditEvent
 from app.core.listing import LimitParam, OffsetParam
 from app.sources.models import Source, SyncReject, SyncRun
-from app.sources.quality import data_quality
+from app.sources.quality import data_quality, database_size
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 admin_router = APIRouter(prefix="/admin", tags=["admin"])
@@ -316,6 +316,18 @@ def source_quality(session: SessionDep, _steward: StewardUser) -> list[SourceQua
         )
         for item in data_quality(session)
     ]
+
+
+class DatabaseSizeOut(BaseModel):
+    used_mb: float
+    limit_mb: int
+    check: str | None
+
+
+@admin_router.get("/database-size", response_model=DatabaseSizeOut)
+def database_size_endpoint(session: SessionDep, _steward: StewardUser) -> DatabaseSizeOut:
+    size = database_size(session)
+    return DatabaseSizeOut(used_mb=size.used_mb, limit_mb=size.limit_mb, check=size.check)
 
 
 @admin_router.get("/sync-runs/{run_id}/rejects", response_model=SyncRejectPage)

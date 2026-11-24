@@ -8,6 +8,11 @@ on:
     - cron: "30 8 * * 0" # Sundays 08:30 UTC (03:30 in Bogotá)
   workflow_dispatch:
 
+permissions:
+  contents: read
+  # To open or update the "calidad-de-datos" issue when something needs a look.
+  issues: write
+
 concurrency:
   group: production-database
   cancel-in-progress: false
@@ -32,8 +37,32 @@ jobs:
           uv run --no-dev alembic upgrade head
           if [ -n "$NEXO_MIGRATION_DATABASE_URL" ]; then uv run --no-dev python -m app.core.grants; fi
       - name: Synchronize all datasets
+        id: sync
         working-directory: backend
         run: uv run --no-dev python -m app.ingestion.cli all
       - name: Rebuild the search index
         working-directory: backend
         run: uv run --no-dev python -m app.search.reindex
+      - name: Check data quality
+        if: always()
+        working-directory: backend
+        run: uv run --no-dev python -m app.sources.quality --report "$RUNNER_TEMP/quality.md" || true
+      - name: Open or update the data-quality issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SYNC_OUTCOME: ${{ steps.sync.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          report="$RUNNER_TEMP/quality.md"
+          if [ "$SYNC_OUTCOME" != "success" ]; then
+            { echo; echo "### Sincronización"; echo; echo "- La sincronización programada no terminó bien ($SYNC_OUTCOME): $RUN_URL"; } >> "$report"
+          fi
+          [ -s "$report" ] || { echo "Sin avisos."; exit 0; }
+          gh label create calidad-de-datos --color D93F0B --description "Avisos automáticos de calidad de los datos" --force
+          issue=$(gh issue list --label calidad-de-datos --state open --json number --jq '.[0].number')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body-file "$report"
+          else
+            gh issue create --title "Calidad de los datos: avisos de la sincronización" --label calidad-de-datos --body-file "$report"
+          fi

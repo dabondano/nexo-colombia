@@ -13,12 +13,13 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.budget.models import BudgetExecution
 from app.catalog.models import Institution
 from app.congress.models import PositionHolding
+from app.core.config import get_settings
 from app.core.labels import SyncStatus
 from app.law.models import LegalInstrument, LegalProvision
 from app.legislation.models import LegislativeInitiative
@@ -136,3 +137,69 @@ def data_quality(session: Session, now: datetime | None = None) -> list[SourceQu
             )
         )
     return result
+
+
+# Warn when the database uses this share of the plan's storage.
+SIZE_WARNING_SHARE = 0.8
+
+
+@dataclass(frozen=True)
+class DatabaseSize:
+    used_mb: float
+    limit_mb: int
+    check: str | None
+
+
+def database_size(session: Session) -> DatabaseSize:
+    used = session.scalar(text("SELECT pg_database_size(current_database())")) or 0
+    used_mb = round(used / 1024 / 1024, 1)
+    limit = get_settings().database_size_limit_mb
+    check = None
+    if used_mb >= limit * SIZE_WARNING_SHARE:
+        check = (
+            f"La base de datos ocupa {used_mb:.0f} MB de {limit} MB ({used_mb / limit:.0%}). "
+            "Reduzca la ventana de contratos (NEXO_SECOP_WINDOW_DAYS) o amplíe el plan."
+        )
+    return DatabaseSize(used_mb=used_mb, limit_mb=limit, check=check)
+
+
+def report(session: Session, now: datetime | None = None) -> str | None:
+    """Markdown listing every check, or None when there is nothing to look at."""
+    lines: list[str] = []
+    size = database_size(session)
+    if size.check:
+        lines += ["### Base de datos", "", f"- {size.check}", ""]
+    for item in data_quality(session, now):
+        if item.checks:
+            lines += [f"### {item.name}", "", *(f"- {check}" for check in item.checks), ""]
+    if not lines:
+        return None
+    header = [
+        "Avisos de la revisión automática de calidad de los datos, después de la "
+        "sincronización. Más detalle en el panel del equipo, «Calidad de los datos».",
+        "",
+    ]
+    return "\n".join(header + lines)
+
+
+def main(argv: list[str]) -> int:
+    """Usage:  python -m app.sources.quality [--report FILE]
+
+    Prints the checks. With --report, writes them as Markdown to FILE, and only
+    when there is something to look at, so a workflow can open an issue then.
+    """
+    from app.core.db import get_engine
+
+    with Session(get_engine()) as session:
+        text_report = report(session)
+    print(text_report or "Sin avisos de calidad de los datos.")
+    if text_report and len(argv) == 2 and argv[0] == "--report":
+        with open(argv[1], "w", encoding="utf-8") as handle:
+            handle.write(text_report)
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    raise SystemExit(main(sys.argv[1:]))

@@ -79,7 +79,12 @@ async function Quality() {
       </div>
     );
   }
-  const result = await staffRequest<SourceQuality[]>("/admin/data-quality");
+  const [result, size] = await Promise.all([
+    staffRequest<SourceQuality[]>("/admin/data-quality"),
+    staffRequest<{ used_mb: number; limit_mb: number; check: string | null }>(
+      "/admin/database-size",
+    ),
+  ]);
   const flagged = result.ok ? result.data.filter((item) => item.checks.length > 0).length : 0;
   return (
     <div className="flex flex-col gap-6">
@@ -90,6 +95,21 @@ async function Quality() {
         ninguna carga correcta en más de 8 días (la sincronización programada es semanal). Los
         estados de calidad califican registros, nunca personas ni entidades.
       </p>
+      {size.ok ? (
+        <section aria-labelledby="titulo-base" className="rounded border border-rule bg-surface p-5">
+          <h2 id="titulo-base" className="text-xl font-semibold">
+            Base de datos
+          </h2>
+          <p className="mt-2 text-sm">
+            Ocupa {formatNumber(Math.round(size.data.used_mb))} MB de{" "}
+            {formatNumber(size.data.limit_mb)} MB del plan (
+            {Math.round((size.data.used_mb / size.data.limit_mb) * 100)} %).
+          </p>
+          {size.data.check ? (
+            <p className="mt-2 border-l-4 border-warn pl-3 text-sm">{size.data.check}</p>
+          ) : null}
+        </section>
+      ) : null}
       {!result.ok ? (
         <Notice>{result.reason}</Notice>
       ) : result.data.length === 0 ? (
@@ -97,6 +117,7 @@ async function Quality() {
       ) : (
         <>
           <p role="status" className="font-medium">
+            {size.ok && size.data.check ? "La base de datos necesita atención. " : ""}
             {flagged === 0
               ? "Ninguna fuente tiene avisos."
               : `${flagged} ${flagged === 1 ? "fuente tiene avisos" : "fuentes tienen avisos"}.`}

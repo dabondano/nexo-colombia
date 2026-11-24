@@ -2,10 +2,12 @@
 
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.sources.models import Source, SyncRun
-from app.sources.quality import data_quality
+from app.sources.quality import data_quality, database_size, report
 from app.sources.registry import seed_registry
 
 NOW = datetime(2026, 11, 24, 12, tzinfo=UTC)
@@ -67,3 +69,29 @@ def test_failed_last_run_is_flagged(session: Session) -> None:
 
 def test_endpoint_is_for_data_stewards(client, session: Session) -> None:  # type: ignore[no-untyped-def]
     assert client.get("/api/v1/admin/data-quality").status_code == 401
+
+
+def test_database_size_warns_near_the_plan_limit(
+    session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    size = database_size(session)
+    assert size.used_mb > 0 and size.check is None  # test database is small
+    monkeypatch.setattr(get_settings(), "database_size_limit_mb", 1)
+    small = database_size(session)
+    assert small.check is not None and "NEXO_SECOP_WINDOW_DAYS" in small.check
+
+
+def test_report_is_empty_without_checks(session: Session) -> None:
+    source = _source(session)
+    session.add(_run(source, 1, 1000))
+    session.commit()
+    assert report(session, NOW) is None
+
+
+def test_report_lists_each_source_with_checks(session: Session) -> None:
+    source = _source(session)
+    session.add(_run(source, 12, 1000))
+    session.commit()
+    text = report(session, NOW)
+    assert text is not None
+    assert "### SECOP II - Contratos Electrónicos" in text and "hace 11 días" in text
