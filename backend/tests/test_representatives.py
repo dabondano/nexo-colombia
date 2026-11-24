@@ -5,7 +5,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.congress.models import InitiativeAuthor, Person, PositionHolding
+from app.congress.models import Person, PositionHolding
+from app.core.relationships import Relationship
 from app.ingestion.datasets import bills, representatives
 from app.ingestion.pipeline import RowRejected, run_sync
 from app.legislation.authors import link_authors, split_authors
@@ -134,11 +135,21 @@ def test_authors_link_only_on_a_single_exact_match_within_the_term(
     assert result.initiatives_considered == 1
     assert result.links == 2
     assert result.ambiguous == 1
-    names = set(session.scalars(select(InitiativeAuthor.author_name)))
+    names = set(session.scalars(select(Relationship.evidence)))
     assert names == {"autora de ejemplo", "Autor de Prueba"}
     # Running again replaces the links instead of adding to them.
     assert link_authors(session).links == 2
-    assert session.scalar(select(func.count()).select_from(InitiativeAuthor)) == 2
+    assert session.scalar(select(func.count()).select_from(Relationship)) == 2
+    link = session.scalars(select(Relationship)).first()
+    assert link is not None
+    assert (link.subject_type, link.predicate, link.object_type) == (
+        "person",
+        "author_of",
+        "legislative_initiative",
+    )
+    assert link.confidence_class == "analytical_association"
+    assert link.epistemic_label == "hipotesis_analitica"
+    assert link.source_record_id is not None and link.method_note
 
 
 def test_representatives_api(client: TestClient, session: Session, loaded: None) -> None:

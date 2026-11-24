@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
-from app.congress.models import InitiativeAuthor, Person, PositionHolding
+from app.congress.models import Person, PositionHolding
 from app.congress.schemas import (
     AuthoredInitiative,
     RepresentativeFilters,
@@ -27,7 +27,9 @@ from app.core.listing import (
     filter_options,
 )
 from app.core.provenance import load_provenance
+from app.core.relationships import Relationship, public_only
 from app.legislation.authors import AUTHOR_RULE
+from app.legislation.authors import PREDICATE as AUTHOR_PREDICATE
 from app.legislation.models import LegislativeInitiative
 
 router = APIRouter(prefix="/representatives", tags=["congress"])
@@ -107,9 +109,15 @@ def get_representative(representative_id: uuid.UUID, session: SessionDep) -> Rep
         raise HTTPException(status_code=404, detail="Representante no encontrado")
     holding, person = row
     authored = session.execute(
-        select(LegislativeInitiative, InitiativeAuthor.author_name)
-        .join(InitiativeAuthor, InitiativeAuthor.initiative_id == LegislativeInitiative.id)
-        .where(InitiativeAuthor.person_id == person.id)
+        select(LegislativeInitiative, Relationship.evidence)
+        .join(Relationship, Relationship.object_id == LegislativeInitiative.id)
+        .where(
+            Relationship.subject_type == "person",
+            Relationship.subject_id == person.id,
+            Relationship.predicate == AUTHOR_PREDICATE,
+            Relationship.object_type == "legislative_initiative",
+            public_only(),
+        )
         .order_by(
             LegislativeInitiative.camara_filed_on.desc().nulls_last(),
             LegislativeInitiative.title_normalized,
@@ -130,7 +138,7 @@ def get_representative(representative_id: uuid.UUID, session: SessionDep) -> Rep
                 senado_number=initiative.senado_number,
                 legislature=initiative.legislature,
                 status=initiative.status,
-                author_name=author_name,
+                author_name=author_name or "",
             )
             for initiative, author_name in authored
         ],

@@ -37,7 +37,7 @@ STAFF = [
 def seed(session: Session) -> None:
     session.execute(
         text(
-            f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.initiative_author, "
+            f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.relationship, "
             f"{CORE_SCHEMA}.content_review, {CORE_SCHEMA}.auth_session, {CORE_SCHEMA}.audit_event, "
             f"{CORE_SCHEMA}.budget_execution, "
             f"{CORE_SCHEMA}.user_account, "

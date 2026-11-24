@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.congress.models import InitiativeAuthor, Person, PositionHolding
+from app.congress.models import Person, PositionHolding
 from app.congress.schemas import LinkedAuthor
 from app.core.db import get_session
 from app.core.listing import (
@@ -21,7 +21,9 @@ from app.core.listing import (
     filter_options,
 )
 from app.core.provenance import load_provenance
+from app.core.relationships import Relationship, public_only
 from app.legislation.authors import AUTHOR_RULE
+from app.legislation.authors import PREDICATE as AUTHOR_PREDICATE
 from app.legislation.models import LegislativeInitiative
 from app.legislation.schemas import (
     InitiativeFilters,
@@ -120,13 +122,19 @@ def get_initiative(initiative_id: uuid.UUID, session: SessionDep) -> InitiativeO
         observations=initiative.observations,
         authors_text=initiative.authors_text,
         linked_authors=[
-            LinkedAuthor(representative_id=holding_id, full_name=full_name, author_name=name)
+            LinkedAuthor(representative_id=holding_id, full_name=full_name, author_name=name or "")
             for holding_id, full_name, name in session.execute(
-                select(PositionHolding.id, Person.full_name, InitiativeAuthor.author_name)
-                .join(Person, Person.id == InitiativeAuthor.person_id)
+                select(PositionHolding.id, Person.full_name, Relationship.evidence)
+                .join(Person, Person.id == Relationship.subject_id)
                 .join(PositionHolding, PositionHolding.person_id == Person.id)
-                .where(InitiativeAuthor.initiative_id == initiative.id)
-                .order_by(InitiativeAuthor.created_at, Person.name_normalized)
+                .where(
+                    Relationship.subject_type == "person",
+                    Relationship.predicate == AUTHOR_PREDICATE,
+                    Relationship.object_type == "legislative_initiative",
+                    Relationship.object_id == initiative.id,
+                    public_only(),
+                )
+                .order_by(Relationship.created_at, Person.name_normalized)
             )
         ],
         linked_authors_rule=AUTHOR_RULE,

@@ -10,6 +10,7 @@ from app.budget import models as _budget_models  # noqa: F401
 from app.catalog import models as _catalog_models  # noqa: F401
 from app.congress import models as _congress_models  # noqa: F401
 from app.core import audit as _audit_models  # noqa: F401
+from app.core import relationships as _relationship_models  # noqa: F401
 from app.core.config import get_settings
 from app.core.db import CORE_SCHEMA, Base
 from app.law import models as _law_models  # noqa: F401

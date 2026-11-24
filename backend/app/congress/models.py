@@ -48,27 +48,3 @@ class PositionHolding(CanonicalRecordMixin, Base):
     email: Mapped[str | None] = mapped_column(String(300))
     office: Mapped[str | None] = mapped_column(Text)
     phone: Mapped[str | None] = mapped_column(Text)
-
-
-class InitiativeAuthor(Base):
-    """A link from a bill to a person among its authors, computed by NEXO.
-
-    Only links that pass the documented matching rule are stored
-    (app/legislation/authors.py); the authors as published stay in
-    `legislative_initiative.authors_text`.
-    """
-
-    __tablename__ = "initiative_author"
-    __table_args__ = (UniqueConstraint("initiative_id", "person_id"), {"schema": CORE_SCHEMA})
-
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    initiative_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey(f"{CORE_SCHEMA}.legislative_initiative.id", ondelete="CASCADE"), index=True
-    )
-    person_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey(f"{CORE_SCHEMA}.person.id", ondelete="CASCADE"), index=True
-    )
-    # The author's name exactly as it appears in the bill's list of authors.
-    author_name: Mapped[str] = mapped_column(Text)
-    match_method: Mapped[str] = mapped_column(String(40))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

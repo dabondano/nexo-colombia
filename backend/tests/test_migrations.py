@@ -21,7 +21,7 @@ def test_migrations_downgrade_and_upgrade_cleanly() -> None:
         "legislative_initiative",
         "person",
         "position_holding",
-        "initiative_author",
+        "relationship",
         "user_account",
         "auth_session",
         "audit_event",
