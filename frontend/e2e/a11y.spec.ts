@@ -36,6 +36,9 @@ const STATIC_PAGES = [
   "/presupuesto",
   "/presupuesto/99-01-00",
   "/contratos",
+  "/leyes",
+  "/leyes/ley-9999-de-2020",
+  "/leyes/ley-9999-de-2020/articulo-1",
   "/contratos?tipo=Compraventa",
   "/no-existe",
 ];

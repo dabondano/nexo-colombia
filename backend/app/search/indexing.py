@@ -198,6 +198,13 @@ def excerpt(text: str, length: int = SUMMARY_LENGTH) -> str:
     return flat[:length].rsplit(" ", 1)[0] + "…"
 
 
+def short_name(instrument: LegalInstrument) -> str:
+    """ "Ley 1712 de 2014", or the Constitution's name."""
+    if instrument.number and instrument.year:
+        return f"{instrument.instrument_type.capitalize()} {instrument.number} de {instrument.year}"
+    return "Constitución Política"
+
+
 def provision_entry(
     provision: LegalProvision, instrument: LegalInstrument, text: str
 ) -> SearchEntry:
@@ -206,8 +213,7 @@ def provision_entry(
     return SearchEntry(
         record_type=LEGAL_PROVISION,
         record_id=provision.id,
-        # Search results name the instrument with the record type.
-        title=provision.label,
+        title=f"{provision.label} · {short_name(instrument)}",
         summary=excerpt(text),
         weighted_text={
             # "articulo 11", "art 11" and the bare number all find the article.

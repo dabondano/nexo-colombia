@@ -15,17 +15,25 @@ import {
 export const metadata: Metadata = {
   title: "Buscar",
   description:
-    "Búsqueda en la Constitución, los proyectos de ley, los representantes, las entidades públicas, su presupuesto y sus contratos cargados en NEXO Colombia.",
+    "Búsqueda en la Constitución, leyes clave, los proyectos de ley, los representantes, las entidades públicas, su presupuesto y sus contratos cargados en NEXO Colombia.",
 };
 
 const PAGE_SIZE = 25;
+
+/** Articles carry their whole address ("leyes/ley-1712-de-2014/articulo-5"). */
+function hitHref(recordType: RecordType, path: string, key: string): string {
+  if (recordType === "legal_provision") {
+    return `/${key.split("/").map(encodeURIComponent).join("/")}`;
+  }
+  return `${path}/${encodeURIComponent(key)}`;
+}
 const BASE_PATH = "/buscar";
 
 const TYPES: Record<RecordType, { singular: string; plural: string; path: string }> = {
   legal_provision: {
-    singular: "Artículo de la Constitución",
-    plural: "Artículos de la Constitución",
-    path: "/constitucion",
+    singular: "Artículo de una norma",
+    plural: "Artículos de la Constitución y las leyes",
+    path: "",
   },
   legislative_initiative: {
     singular: "Iniciativa legislativa",
@@ -71,7 +79,7 @@ function Hit({ hit }: { hit: SearchHit }) {
       </p>
       <h3 className="mt-1 text-lg font-semibold">
         <Link
-          href={`${type.path}/${encodeURIComponent(hit.record_key)}`}
+          href={hitHref(hit.record_type, type.path, hit.record_key)}
           className="text-brand underline underline-offset-4"
         >
           {hit.title}
@@ -182,7 +190,8 @@ async function Results({ searchParams }: { searchParams: Promise<SearchParams> }
       <>
         <SearchForm q={undefined} />
         <Notice>
-          Escriba una o varias palabras para buscar en la Constitución, en los proyectos de ley
+          Escriba una o varias palabras para buscar en la Constitución y en leyes clave, en los
+          proyectos de ley
           y los representantes de la Cámara, en el directorio de entidades públicas, en el
           presupuesto de las entidades nacionales y en sus contratos recientes.
         </Notice>

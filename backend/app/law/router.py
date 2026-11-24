@@ -40,6 +40,13 @@ def list_instruments(session: SessionDep) -> list[LegalInstrument]:
     )
 
 
+@instruments_router.head("/{slug}", include_in_schema=False)
+def instrument_exists(slug: str, session: SessionDep) -> Response:
+    """Existence check without the outline, used by the web app to answer 404 early."""
+    found = session.scalar(select(LegalInstrument.id).where(LegalInstrument.slug == slug))
+    return Response(status_code=200 if found else 404)
+
+
 @instruments_router.get("/{slug}", response_model=InstrumentOut)
 def get_instrument(slug: str, session: SessionDep) -> InstrumentOut:
     instrument = session.scalar(select(LegalInstrument).where(LegalInstrument.slug == slug))

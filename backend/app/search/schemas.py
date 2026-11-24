@@ -11,8 +11,8 @@ class SearchHit(BaseModel):
 
     record_type: str
     record_id: uuid.UUID
-    # The key in the record's public address: its id, or the budget code for a
-    # budget entity (whose pages are addressed by code).
+    # The key in the record's public address: its id; the budget code for a
+    # budget entity; for an article, its page address ("leyes/ley-1712-de-2014/articulo-5").
     record_key: str = ""
     title: str
     summary: str | None

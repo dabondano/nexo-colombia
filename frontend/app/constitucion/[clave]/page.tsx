@@ -5,12 +5,10 @@ import { Suspense } from "react";
 import { Notice } from "@/components/Notice";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
 import { ProvisionReviewNotice } from "@/components/ReviewNotice";
-import { SourceText, hasStruckText } from "@/components/SourceText";
+import { ProvisionText, ReviewWarning } from "@/components/ProvisionText";
 import {
   fetchConstitutionProvision,
-  type Provision,
   type ProvisionRef,
-  type Segment,
 } from "@/lib/api";
 
 const linkClass = "text-brand underline underline-offset-4";
@@ -28,70 +26,6 @@ export async function generateMetadata(
 
 function refLabel(ref: ProvisionRef): string {
   return ref.heading ? `${ref.label}. ${ref.heading}` : ref.label;
-}
-
-function SegmentBlock({ segment }: { segment: Segment }) {
-  if (segment.kind === "note") {
-    return (
-      <p className="border-l-4 border-rule pl-3 text-sm text-ink-muted">
-        <span className="font-medium">Nota de la fuente: </span>
-        {segment.text}
-      </p>
-    );
-  }
-  if (segment.kind === "after_previous_mark") {
-    return (
-      <p className="border-l-4 border-warn pl-3 text-ink-muted">
-        <span className="block text-sm font-medium text-warn">
-          Impreso después de la marca «TEXTO ANTERIOR»: puede no estar vigente
-        </span>
-        <SourceText text={segment.text} />
-      </p>
-    );
-  }
-  return (
-    <p className="text-lg leading-relaxed">
-      <SourceText text={segment.text} />
-    </p>
-  );
-}
-
-function ReviewWarning({ provision }: { provision: Provision }) {
-  const afterMark = provision.segments.some(
-    (s) => s.kind === "after_previous_mark",
-  );
-  const struck = provision.segments.some((s) => hasStruckText(s.text));
-  const noWording = !provision.segments.some((s) => s.kind === "text");
-  if (!afterMark && !struck && !noWording) return null;
-  return (
-    <section
-      aria-labelledby="titulo-revision"
-      className="rounded border border-warn bg-surface p-5"
-    >
-      <h2 id="titulo-revision" className="text-lg font-semibold text-warn">
-        Este artículo requiere revisión con la fuente oficial
-      </h2>
-      <ul className="mt-2 list-disc pl-5">
-        {afterMark ? (
-          <li>
-            La fuente imprime texto después de su marca «TEXTO ANTERIOR» y no
-            indica dónde termina el texto anterior. Lo que aparece después de
-            esa marca puede incluir texto que ya no está vigente y también
-            incisos vigentes.
-          </li>
-        ) : null}
-        {struck ? (
-          <li>
-            La fuente muestra palabras tachadas. Aquí aparecen tachadas y no se
-            buscan.
-          </li>
-        ) : null}
-        {noWording ? (
-          <li>La fuente no imprime texto vigente para este artículo.</li>
-        ) : null}
-      </ul>
-    </section>
-  );
 }
 
 function Neighbour({
@@ -152,13 +86,7 @@ async function ProvisionRecord({
         aria-label="Texto según la fuente"
         className="flex max-w-3xl flex-col gap-4"
       >
-        {provision.segments.length === 0 ? (
-          <Notice>La fuente no imprime texto para esta parte.</Notice>
-        ) : (
-          provision.segments.map((segment, index) => (
-            <SegmentBlock key={index} segment={segment} />
-          ))
-        )}
+        <ProvisionText segments={provision.segments} />
       </section>
 
       <nav

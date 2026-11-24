@@ -10,8 +10,10 @@ from sqlalchemy.orm import Session
 from app.budget.models import BudgetExecution
 from app.core.db import get_session
 from app.core.listing import DEFAULT_LIMIT, LimitParam, OffsetParam
+from app.ingestion.datasets.constitution import SLUG as CONSTITUTION_SLUG
 from app.ingestion.text import normalize_for_search
-from app.search.indexing import BUDGET_ENTITY, RECORD_TYPES, TEXT_CONFIG
+from app.law.models import LegalInstrument, LegalProvision
+from app.search.indexing import BUDGET_ENTITY, LEGAL_PROVISION, RECORD_TYPES, TEXT_CONFIG
 from app.search.models import SearchDocument
 from app.search.schemas import SearchHit, SearchPage, TypeCount
 
@@ -92,6 +94,21 @@ def search(
         .limit(limit)
         .offset(offset)
     ).all()
+    provision_ids = [row.record_id for row in rows if row.record_type == LEGAL_PROVISION]
+    provision_keys = (
+        {
+            provision_id: (
+                f"constitucion/{path}" if slug == CONSTITUTION_SLUG else f"leyes/{slug}/{path}"
+            )
+            for provision_id, slug, path in session.execute(
+                select(LegalProvision.id, LegalInstrument.slug, LegalProvision.path)
+                .join(LegalInstrument, LegalInstrument.id == LegalProvision.instrument_id)
+                .where(LegalProvision.id.in_(provision_ids))
+            )
+        }
+        if provision_ids
+        else {}
+    )
     budget_ids = [row.record_id for row in rows if row.record_type == BUDGET_ENTITY]
     budget_codes: dict[Any, str] = {
         line_id: code
@@ -104,7 +121,9 @@ def search(
     items = []
     for row in rows:
         hit = SearchHit.model_validate(row)
-        hit.record_key = budget_codes.get(row.record_id, str(row.record_id))
+        hit.record_key = provision_keys.get(row.record_id) or budget_codes.get(
+            row.record_id, str(row.record_id)
+        )
         items.append(hit)
     return SearchPage(
         query=text,

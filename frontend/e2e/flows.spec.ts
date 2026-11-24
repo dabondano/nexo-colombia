@@ -51,6 +51,8 @@ test("los registros que no existen responden 404", async ({ request }) => {
     `/representantes/${missing}`,
     "/presupuesto/00-00-00",
     `/contratos/${missing}`,
+    "/leyes/ley-1-de-1900",
+    "/leyes/ley-9999-de-2020/articulo-99",
     "/constitucion/articulo-999",
     "/aprender/no-existe",
     "/no-existe",
@@ -139,6 +141,26 @@ test("contratos: de la lista a un contrato, a la entidad y a sus contratos", asy
   await expect(page.getByText("EMPRESA DE EJEMPLO S.A.S.")).toBeVisible();
 });
 
+test("leyes: de la lista a una ley, a un artículo y al siguiente", async ({ page }) => {
+  await page.goto("/leyes");
+  await page.getByRole("link", { name: "Ley 9999 de 2020" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Ley 9999 de 2020" })).toBeVisible();
+  await expect(page.getByText(/Expedida el 6 de marzo de 2020 · Publicada en el Diario Oficial/)).toBeVisible();
+  await page.getByRole("link", { name: "Título II. DISPOSICIONES FINALES" }).click();
+  await page.getByRole("link", { name: "Artículo 1", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Artículo 1" })).toBeVisible();
+  await expect(page.getByText(/Ley 9999 de 2020 · Título I/)).toBeVisible();
+  await expect(page.getByText(/Nota de la fuente:/)).toBeVisible();
+  await page.getByRole("link", { name: "Siguiente: Artículo 2" }).click();
+  await expect(page).toHaveURL(/\/leyes\/ley-9999-de-2020\/articulo-2$/);
+});
+
+test("la búsqueda lleva al artículo de la ley", async ({ page }) => {
+  await page.goto("/buscar?q=acceso+documentos&tipo=legal_provision");
+  await page.getByRole("link", { name: "Artículo 1 · Ley 9999 de 2020" }).click();
+  await expect(page).toHaveURL(/\/leyes\/ley-9999-de-2020\/articulo-1$/);
+});
+
 test("el inicio muestra cada conjunto de datos con su cifra y su fuente", async ({ page }) => {
   await page.goto("/");
   for (const label of [
@@ -146,6 +168,7 @@ test("el inicio muestra cada conjunto de datos con su cifra y su fuente", async 
     "Ver los representantes",
     "Ver el presupuesto",
     "Explorar los contratos",
+    "Leer las leyes",
   ]) {
     await expect(page.getByRole("link", { name: label })).toBeVisible();
   }

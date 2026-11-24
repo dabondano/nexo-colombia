@@ -178,7 +178,10 @@ export type InstrumentSummary = {
   slug: string;
   title: string;
   instrument_type: string;
+  number: string | null;
   year: number | null;
+  promulgated_on: string | null;
+  official_publication_ref: string | null;
   /** What is known about how current the loaded edition is. */
   edition_note: string | null;
 };
@@ -478,5 +481,17 @@ export const constitutionProvisionPath = (key: string) =>
     : `/instruments/${CONSTITUTION_SLUG}/provisions/${encodeURIComponent(key)}`;
 export const fetchConstitutionProvision = (key: string) =>
   getJson<Provision>(constitutionProvisionPath(key));
+
+export const fetchInstruments = () => getJson<InstrumentSummary[]>("/instruments");
+export const instrumentPath = (slug: string) => `/instruments/${encodeURIComponent(slug)}`;
+export const lawProvisionPath = (slug: string, key: string) =>
+  `/instruments/${encodeURIComponent(slug)}/provisions/${encodeURIComponent(key)}`;
+export const fetchLawProvision = (slug: string, key: string) =>
+  getJson<Provision>(lawProvisionPath(slug, key));
+/** "Ley 1712 de 2014", "Ley estatutaria 1757 de 2015". */
+export const lawName = (law: InstrumentSummary) =>
+  law.number && law.year
+    ? `${law.instrument_type.charAt(0).toUpperCase()}${law.instrument_type.slice(1)} ${law.number} de ${law.year}`
+    : law.title;
 
 export const fetchSearch = (params: Params) => getJson<SearchPage>("/search", params);
