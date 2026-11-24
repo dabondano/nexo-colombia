@@ -256,7 +256,9 @@ def test_search_finds_articles_by_number_and_by_wording(
 ) -> None:
     def titles(query: str) -> list[str]:
         response = client.get(f"{API}/search", params={"q": query, "type": "legal_provision"})
-        return [hit["title"] for hit in response.json()["items"]]
+        hits = response.json()["items"]
+        assert all(hit["title"].endswith(" · Constitución Política") for hit in hits)
+        return [hit["title"].removesuffix(" · Constitución Política") for hit in hits]
 
     assert titles("articulo 11")[0] == "Artículo 11"
     assert titles("pena de muerte") == ["Artículo 11"]

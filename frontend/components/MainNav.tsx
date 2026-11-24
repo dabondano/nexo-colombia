@@ -12,6 +12,7 @@ const NAV = [
   { href: "/instituciones", label: "Instituciones" },
   { href: "/presupuesto", label: "Presupuesto" },
   { href: "/contratos", label: "Contratos" },
+  { href: "/leyes", label: "Leyes" },
   { href: "/fuentes", label: "Fuentes" },
 ];
 

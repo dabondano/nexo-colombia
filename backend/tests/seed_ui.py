@@ -27,12 +27,15 @@ from app.ingestion.datasets import (
     constitution,
     contracts,
     entities,
+    laws,
     representatives,
 )
 from app.ingestion.pipeline import run_sync
+from app.law.statute_catalog import StatuteSpec
 from app.legislation.authors import link_authors
 from app.procurement.links import link_contract_institutions
 from app.sources.registry import seed_registry
+from tests import statute_page
 from tests.constitution_page import page
 from tests.samples import (
     bill_row,
@@ -152,6 +155,9 @@ def seed(session: Session) -> None:
         ],
     )
     link_contract_institutions(session)
+    # A sample law (invented text, not in the catalog): number 9999 of 2020.
+    sample_law = StatuteSpec(1, "9999", 2020)
+    run_sync(session, laws.SPEC, laws.rows_for(sample_law, statute_page.SAMPLE_LAW))
     link_authors(session)
     link_budget_institutions(session)
     index_budget_entities(session)

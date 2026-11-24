@@ -1,6 +1,8 @@
 """Run a dataset synchronization.
 
-Usage:  python -m app.ingestion.cli entities|bills|representatives|budget|constitution|contracts|all
+Usage:  python -m app.ingestion.cli DATASET|all
+
+DATASET: entities, bills, representatives, budget, constitution, laws or contracts.
 
 `all` also rebuilds the links from bills to their authors (app/legislation/authors.py).
 """
@@ -20,6 +22,7 @@ from app.ingestion.datasets import (
     constitution,
     contracts,
     entities,
+    laws,
     representatives,
 )
 from app.ingestion.pipeline import DatasetSpec, Row, run_sync
@@ -44,6 +47,7 @@ DATASETS: dict[str, tuple[DatasetSpec, Callable[[], Iterable[Row]]]] = {
     ),
     "budget": (budget.SPEC, _socrata(budget.DATASET_ID)),
     "constitution": (constitution.SPEC, constitution.fetch_rows),
+    "laws": (laws.SPEC, laws.fetch_rows),
     "contracts": (
         contracts.SPEC,
         lambda: map(

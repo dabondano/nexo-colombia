@@ -1,7 +1,7 @@
 """Response shapes for legal instruments and their provisions."""
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -15,7 +15,10 @@ class InstrumentSummary(BaseModel):
     slug: str
     title: str
     instrument_type: str
+    number: str | None = None
     year: int | None
+    promulgated_on: date | None = None
+    official_publication_ref: str | None = None
     # What is known about how current the loaded edition is.
     edition_note: str | None
 

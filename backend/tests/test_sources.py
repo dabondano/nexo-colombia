@@ -131,7 +131,7 @@ def test_source_record_is_append_only_by_content_hash(session: Session) -> None:
 def test_registry_seed_is_idempotent(client: TestClient, session: Session) -> None:
     from app.sources.registry import REGISTRY, seed_registry
 
-    expected = len(REGISTRY) + 1  # the datos.gov.co datasets and the Constitution's page
+    expected = len(REGISTRY) + 2  # datos.gov.co datasets, Constitution and laws pages
     assert seed_registry(session) == expected
     assert seed_registry(session) == 0
 

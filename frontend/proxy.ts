@@ -3,6 +3,8 @@ import {
   budgetEntityPath,
   constitutionProvisionPath,
   contractPath,
+  instrumentPath,
+  lawProvisionPath,
   recordExists,
   representativePath,
 } from "@/lib/api";
@@ -35,6 +37,12 @@ const MALFORMED = Symbol("malformed");
 
 function apiPathFor(pathname: string): string | typeof MALFORMED | null {
   const [, section, key, ...rest] = pathname.split("/");
+  if (section === "leyes" && key && rest.length <= 1) {
+    const law = safeDecode(key);
+    const article = rest.length === 1 ? safeDecode(rest[0]) : undefined;
+    if (law === null || article === null) return MALFORMED;
+    return article === undefined ? instrumentPath(law) : lawProvisionPath(law, article);
+  }
   if (!key || rest.length > 0) return null;
   const decoded = safeDecode(key);
   if (decoded === null) return MALFORMED;
@@ -102,6 +110,8 @@ export const config = {
     "/presupuesto/:codigo",
     "/contratos/:id",
     "/constitucion/:clave",
+    "/leyes/:ley",
+    "/leyes/:ley/:clave",
     "/aprender/:leccion",
     "/ingresar",
     "/panel",

@@ -143,7 +143,11 @@ def map_row(payload: Payload) -> dict[str, Any]:
         if not title:
             raise RowRejected("La página no trae el título de la norma")
         return {"record": "instrument", "title": title, "edition_note": _edition_note(payload)}
+    return map_provision(payload)
 
+
+def map_provision(payload: Payload) -> dict[str, Any]:
+    """Shared with app/ingestion/datasets/laws.py: one provision row to stored values."""
     segments: list[dict[str, str]] = payload.get("segments") or []
     wording = [without_struck(s["text"]) for s in segments if s["kind"] == TEXT]
     text = "\n\n".join(part for part in wording if part)
@@ -209,6 +213,18 @@ def upsert(
     instrument = _instrument(session)
     if instrument is None:
         raise LookupError("La norma debe cargarse antes que sus disposiciones")
+    return upsert_provision(session, instrument, external_id, values, source_record_id)
+
+
+def upsert_provision(
+    session: Session,
+    instrument: LegalInstrument,
+    path: str,
+    values: dict[str, Any],
+    source_record_id: uuid.UUID,
+) -> bool:
+    """Stores a provision and, when its segments changed, a new current version."""
+    external_id = path
     parent_path = values.pop("parent")
     text, segments = values.pop("text"), values.pop("segments")
     parent_id = None

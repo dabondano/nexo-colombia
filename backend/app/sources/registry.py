@@ -135,11 +135,47 @@ def _constitution_source() -> Source:
     )
 
 
+LAWS_REF = "funcionpublica.gov.co:gestor-normativo:leyes"
+
+
+def _laws_source() -> Source:
+    """Checked on 2026-11-24: the 15 pages of app/law/statute_catalog.py read in full."""
+    return Source(
+        external_ref=LAWS_REF,
+        name="Gestor Normativo: leyes seleccionadas",
+        institution="Departamento Administrativo de la Función Pública",
+        url="https://www.funcionpublica.gov.co/eva/gestornormativo/",
+        category="normas",
+        acquisition_method=AcquisitionMethod.HTML.value,
+        update_frequency="Permanente, según la fuente",
+        reliability_class=OFFICIAL_INSTITUTIONAL_RECORD,
+        licence=(
+            "Texto normativo de reproducción permitida (Ley 23 de 1982, artículo 41). "
+            "Condiciones de uso del sitio no verificadas."
+        ),
+        access_restrictions=None,
+        known_limitations=(
+            "Edición informativa: la fuente advierte que no responde por la vigencia de las "
+            "normas. Cada ley es una página; NEXO carga una lista fija de leyes "
+            "(app/law/statute_catalog.py). Las páginas mezclan texto vigente con texto anterior "
+            "o tachado, citan artículos de otras leyes dentro de las leyes que los modifican y "
+            "a veces imprimen encabezados sin rótulo o repetidos; NEXO declara cada arreglo. "
+            "No incorpora las listas de concordancias «(Ver …)» ni lo que la página agrega "
+            "después de las firmas."
+        ),
+        verification_status=VerificationStatus.VERIFIED.value,
+        last_verified_at=datetime(2026, 11, 24, 17, 30, tzinfo=UTC),  # 12:30 in Bogotá
+    )
+
+
 def seed_registry(session: Session) -> int:
     """Insert registry entries that are not yet present. Returns how many were added."""
     added = 0
     if session.scalar(select(Source.id).where(Source.external_ref == CONSTITUTION_REF)) is None:
         session.add(_constitution_source())
+        added += 1
+    if session.scalar(select(Source.id).where(Source.external_ref == LAWS_REF)) is None:
+        session.add(_laws_source())
         added += 1
     for entry in REGISTRY:
         external_ref = f"datos.gov.co:{entry['dataset_id']}"
