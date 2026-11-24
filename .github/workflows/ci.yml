@@ -239,8 +239,11 @@ jobs:
           test "$(code http://localhost:10000/presupuesto/00-00-00)" = 404
           test "$(code http://localhost:10000/panel)" = 307
           # The application runs as the restricted account, which cannot rewrite the audit log.
-          PGPASSWORD=nexo_app psql -h localhost -U nexo_app -d nexo_ui -c 'TRUNCATE core.audit_event' 2>&1 | grep -q 'permission denied'
-          PGPASSWORD=nexo_app psql -h localhost -U nexo_app -d nexo_ui -c 'DELETE FROM core.audit_event' 2>&1 | grep -q 'permission denied'
+          for statement in 'TRUNCATE core.audit_event' 'DELETE FROM core.audit_event'; do
+            out=$(PGPASSWORD=nexo_app psql -h localhost -U nexo_app -d nexo_ui -c "$statement" 2>&1 || true)
+            echo "$statement -> $out"
+            echo "$out" | grep -q 'permission denied'
+          done
           # The API listens on 127.0.0.1 inside the container only.
           docker exec nexo python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready')"
           # Per-IP limit on staff forms, keyed on the trusted header.
