@@ -14,6 +14,10 @@ history:
 - core.sync_reject   rejected rows with their reasons
 - core.content_review legal reviews, never edited
 
+The one deletion it can make in the raw layer goes through
+core.prune_contract_raw_records (A-015), which removes only SECOP raw records
+whose contract has left the loading window.
+
 It cannot create, alter, drop or truncate tables. Idempotent; run after every
 migration so new tables are covered.
 """
@@ -54,6 +58,7 @@ def apply_grants(connection: Connection, role: str) -> None:
         ),
         # The schema version is read, never written, by the application.
         f"REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON {CORE_SCHEMA}.alembic_version FROM {role}",
+        f"GRANT EXECUTE ON FUNCTION {CORE_SCHEMA}.prune_contract_raw_records() TO {role}",
     ]
     for statement in statements:
         connection.execute(text(statement))

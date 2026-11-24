@@ -21,12 +21,27 @@ from app.budget.history import record_snapshots
 from app.budget.links import index_budget_entities, link_budget_institutions
 from app.budget.models import BudgetSnapshot
 from app.core.db import CORE_SCHEMA, SEARCH_SCHEMA, get_engine
-from app.ingestion.datasets import bills, budget, constitution, entities, representatives
+from app.ingestion.datasets import (
+    bills,
+    budget,
+    constitution,
+    contracts,
+    entities,
+    representatives,
+)
 from app.ingestion.pipeline import run_sync
 from app.legislation.authors import link_authors
+from app.procurement.links import link_contract_institutions
 from app.sources.registry import seed_registry
 from tests.constitution_page import page
-from tests.samples import bill_row, budget_row, entity_row, representative_row
+from tests.samples import (
+    bill_row,
+    budget_row,
+    company_contract,
+    contract_row,
+    entity_row,
+    representative_row,
+)
 
 OPPOSITION_BASIS = "C.P. Art. 112 y Ley 1909 de 2018 Art. 24 (ejemplo)"
 
@@ -45,6 +60,7 @@ def seed(session: Session) -> None:
             f"TRUNCATE {SEARCH_SCHEMA}.document, {CORE_SCHEMA}.relationship, "
             f"{CORE_SCHEMA}.content_review, {CORE_SCHEMA}.auth_session, {CORE_SCHEMA}.audit_event, "
             f"{CORE_SCHEMA}.budget_execution, {CORE_SCHEMA}.budget_snapshot, "
+            f"{CORE_SCHEMA}.contract, "
             f"{CORE_SCHEMA}.user_account, "
             f"{CORE_SCHEMA}.position_holding, {CORE_SCHEMA}.person, "
             f"{CORE_SCHEMA}.provision_version, {CORE_SCHEMA}.legal_provision, "
@@ -68,7 +84,8 @@ def seed(session: Session) -> None:
                 departamento="BOGOTÁ D.C",
             ),
             # Same name as a budget entity: linked by rule A-014.
-            entity_row("9003", nombre="Agencia de Ejemplo"),
+            # Also the contracting entity of the sample contracts (same NIT, A-016).
+            entity_row("9003", nombre="Agencia de Ejemplo", ccb_nit_inst="900000001"),
             *(entity_row(str(9100 + n), nombre=f"ENTIDAD DE EJEMPLO {n:02d}") for n in range(30)),
         ],
     )
@@ -115,6 +132,26 @@ def seed(session: Session) -> None:
             ),
         ],
     )
+    run_sync(
+        session,
+        contracts.SPEC,
+        [
+            contracts.minimize(row)
+            for row in (
+                contract_row(),
+                company_contract(),
+                contract_row(
+                    "CO1.PCCNTR.1000003",
+                    nombre_entidad="MINISTERIO DE EJEMPLO",
+                    nit_entidad="900000002",
+                    objeto_del_contrato="Servicio de vigilancia de ejemplo para la sede central",
+                    tipo_de_contrato="Otro",
+                    fecha_de_firma="2026-10-15T10:00:00.000",
+                ),
+            )
+        ],
+    )
+    link_contract_institutions(session)
     link_authors(session)
     link_budget_institutions(session)
     index_budget_entities(session)

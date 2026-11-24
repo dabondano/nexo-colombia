@@ -94,6 +94,10 @@ test("gestión de datos: sincronizaciones y filas rechazadas, sin acceso a cuent
   await table.getByRole("link", { name: /filas rechazadas de Proyectos de Ley/ }).first().click();
   await expect(page.getByText("Fila de relleno del sistema de origen").first()).toBeVisible();
   await expectAccessible(page);
+  await page.getByRole("link", { name: "Calidad de los datos" }).first().click();
+  await expect(page.getByRole("heading", { name: "SECOP II - Contratos Electrónicos" })).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("Ninguna fuente tiene avisos.");
+  await expectAccessible(page);
   await page.goto("/panel/usuarios");
   await expect(page.getByText("Su rol no permite ver esta sección.")).toBeVisible();
 });
@@ -102,6 +106,8 @@ test("revisión jurídica: sin acceso a sincronizaciones; cerrar sesión", async
   await signIn(page, REVIEWER);
   await expect(page.getByRole("heading", { name: "Revisión jurídica" })).toBeVisible();
   await page.goto("/panel/sincronizaciones");
+  await expect(page.getByText("Su rol no permite ver esta sección.")).toBeVisible();
+  await page.goto("/panel/calidad");
   await expect(page.getByText("Su rol no permite ver esta sección.")).toBeVisible();
   await page.getByRole("button", { name: "Cerrar sesión" }).click();
   await expect(page).toHaveURL(/\/ingresar$/);

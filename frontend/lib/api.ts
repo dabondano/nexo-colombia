@@ -79,6 +79,7 @@ export type Institution = InstitutionSummary & {
   budget_entity: { entity_code: string; entity_name: string } | null;
   budget_entity_label: string;
   budget_entity_rule: string;
+  contract_count: number;
   epistemic_label: string;
   provenance: Provenance;
 };
@@ -230,7 +231,8 @@ export type RecordType =
   | "legislative_initiative"
   | "representative"
   | "institution"
-  | "budget_entity";
+  | "budget_entity"
+  | "contract";
 
 export type SearchHit = {
   record_type: RecordType;
@@ -390,6 +392,62 @@ export const fetchBudgetEntities = (params: Params) =>
 export const budgetEntityPath = (code: string) => `/budget/entities/${encodeURIComponent(code)}`;
 export const fetchBudgetEntity = (code: string) =>
   getJson<EntityBudgetDetail>(budgetEntityPath(code));
+
+export type ContractSummary = {
+  id: string;
+  source_key: string;
+  purpose: string;
+  entity_name: string;
+  supplier_name: string | null;
+  supplier_kind: string;
+  supplier_label: string;
+  contract_type: string | null;
+  modality: string | null;
+  status: string | null;
+  signed_on: string;
+  value: string;
+};
+export type ContractPage = Page<ContractSummary> & { window_note: string };
+export type Contract = ContractSummary & {
+  process_id: string | null;
+  reference: string | null;
+  entity_nit: string | null;
+  institution: { institution_id: string; name: string } | null;
+  institution_rule: string;
+  department: string | null;
+  city: string | null;
+  sector: string | null;
+  branch: string | null;
+  modality_reason: string | null;
+  start_on: string | null;
+  end_on: string | null;
+  duration_text: string | null;
+  days_added: number | null;
+  supplier_nit: string | null;
+  supplier_is_sme: boolean | null;
+  resource_origin: string | null;
+  spending_type: string | null;
+  invoiced: string | null;
+  paid: string | null;
+  pending_payment: string | null;
+  pending_execution: string | null;
+  process_url: string | null;
+  source_updated_at: string | null;
+  data_quality_status: string;
+  privacy_note: string;
+  value_note: string;
+  window_note: string;
+  epistemic_label: string;
+  provenance: Provenance;
+};
+
+export const fetchContracts = (params: Params) => getJson<ContractPage>("/contracts", params);
+export const fetchContractFilters = () =>
+  getJson<{ contract_type: FilterOption[]; modality: FilterOption[]; status: FilterOption[] }>(
+    "/contracts/filters",
+  );
+export const contractPath = (id: string) => `/contracts/${encodeURIComponent(id)}`;
+export const fetchContract = (id: string) => getJson<Contract>(contractPath(id));
 
 export type ReviewContentType = "lesson" | "constitution_provision";
 

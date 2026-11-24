@@ -1,6 +1,6 @@
 """Run a dataset synchronization.
 
-Usage:  python -m app.ingestion.cli entities|bills|representatives|budget|constitution|all
+Usage:  python -m app.ingestion.cli entities|bills|representatives|budget|constitution|contracts|all
 
 `all` also rebuilds the links from bills to their authors (app/legislation/authors.py).
 """
@@ -14,10 +14,19 @@ from app.budget.history import record_snapshots
 from app.budget.links import index_budget_entities, link_budget_institutions
 from app.core import audit
 from app.core.db import get_engine
-from app.ingestion.datasets import bills, budget, constitution, entities, representatives
+from app.ingestion.datasets import (
+    bills,
+    budget,
+    constitution,
+    contracts,
+    entities,
+    representatives,
+)
 from app.ingestion.pipeline import DatasetSpec, Row, run_sync
 from app.ingestion.socrata import SocrataClient
 from app.legislation.authors import link_authors
+from app.procurement.links import link_contract_institutions
+from app.procurement.retention import prune_contracts
 from app.sources.registry import seed_registry
 
 
@@ -35,6 +44,15 @@ DATASETS: dict[str, tuple[DatasetSpec, Callable[[], Iterable[Row]]]] = {
     ),
     "budget": (budget.SPEC, _socrata(budget.DATASET_ID)),
     "constitution": (constitution.SPEC, constitution.fetch_rows),
+    "contracts": (
+        contracts.SPEC,
+        lambda: map(
+            contracts.minimize,
+            SocrataClient().iter_rows(
+                contracts.DATASET_ID, where=contracts.where_clause(), fields=contracts.FIELDS
+            ),
+        ),
+    ),
 }
 
 
@@ -63,6 +81,19 @@ def main(argv: list[str]) -> int:
                 },
             )
             snapshots = record_snapshots(session) if name == "budget" else None
+            if name == "contracts":
+                pruned = prune_contracts(session)
+                print(
+                    f"contratos: ventana desde {pruned.window_start}; "
+                    f"retirados={pruned.contracts} copias_crudas={pruned.raw_records}"
+                )
+                contract_links = link_contract_institutions(session)
+                print(
+                    f"contratos: NIT={contract_links.entity_nits} "
+                    f"enlazados={contract_links.linked_nits} "
+                    f"compartidos={contract_links.ambiguous_nits} "
+                    f"contratos_enlazados={contract_links.linked_contracts}"
+                )
             session.commit()
             print(
                 f"{name}: vistos={result.rows_seen} nuevos={result.rows_new} "

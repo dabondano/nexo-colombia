@@ -44,6 +44,8 @@ class InstitutionOut(InstitutionSummary):
     budget_entity: LinkedBudgetEntityOut | None = None
     budget_entity_label: EpistemicLabel = EpistemicLabel.HIPOTESIS_ANALITICA
     budget_entity_rule: str = LINK_RULE
+    # Contracts in NEXO's SECOP window linked to this entity by NIT (A-016).
+    contract_count: int = 0
     # Directory data copied from an official database (brief section 2.1).
     epistemic_label: EpistemicLabel = EpistemicLabel.HECHO_DOCUMENTADO
     provenance: ProvenanceOut

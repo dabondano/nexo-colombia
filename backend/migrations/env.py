@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.core.db import CORE_SCHEMA, Base
 from app.law import models as _law_models  # noqa: F401
 from app.legislation import models as _legislation_models  # noqa: F401
+from app.procurement import models as _procurement_models  # noqa: F401
 from app.review import models as _review_models  # noqa: F401
 from app.search import models as _search_models  # noqa: F401
 from app.sources import models as _sources_models  # noqa: F401

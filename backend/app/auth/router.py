@@ -28,6 +28,7 @@ from app.core import audit
 from app.core.audit import AuditEvent
 from app.core.listing import LimitParam, OffsetParam
 from app.sources.models import Source, SyncReject, SyncRun
+from app.sources.quality import data_quality
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 admin_router = APIRouter(prefix="/admin", tags=["admin"])
@@ -286,6 +287,35 @@ def sync_runs(
     return SyncRunPage(
         total=total, limit=limit, offset=offset, items=[_run_out(r, s) for r, s in rows]
     )
+
+
+class SourceQualityOut(BaseModel):
+    source_id: uuid.UUID
+    name: str
+    external_ref: str
+    last_run: SyncRunOut
+    last_success_at: datetime | None
+    source_updated_at: datetime | None
+    records_by_quality: dict[str, int]
+    checks: list[str]
+
+
+@admin_router.get("/data-quality", response_model=list[SourceQualityOut])
+def source_quality(session: SessionDep, _steward: StewardUser) -> list[SourceQualityOut]:
+    sources = {source.id: source for source in session.scalars(select(Source))}
+    return [
+        SourceQualityOut(
+            source_id=item.source_id,
+            name=item.name,
+            external_ref=item.external_ref,
+            last_run=_run_out(item.last_run, sources[item.source_id]),
+            last_success_at=item.last_success_at,
+            source_updated_at=item.source_updated_at,
+            records_by_quality=item.records_by_quality,
+            checks=item.checks,
+        )
+        for item in data_quality(session)
+    ]
 
 
 @admin_router.get("/sync-runs/{run_id}/rejects", response_model=SyncRejectPage)

@@ -160,6 +160,7 @@ Structured logs, request IDs, sync-run metrics per source, error tracking, healt
 - **Analysis:** B loses the ability to show what a source said on a given date and to roll back a bad import. A costs storage but makes provenance, rollback and conflict display straightforward.
 - **Decision:** A.
 - **Consequences:** More storage and pipeline code; every fact is reproducible from its raw snapshot.
+- **Exception (2026-11-24, owner decision, A-015):** SECOP II contracts are kept only for a rolling 90-day signing window so the database fits the free plan. Contracts leaving the window are deleted with their raw copies through one owner-defined function (`core.prune_contract_raw_records`), the only raw-layer deletion the application account can perform. SECOP keeps every contract.
 
 ### ADR-005: Start with official open-data APIs, postpone scraping
 - **Status:** Proposed

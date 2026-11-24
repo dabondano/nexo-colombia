@@ -19,7 +19,12 @@ router = APIRouter(prefix="/search", tags=["search"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
 RecordType = Literal[
-    "legal_provision", "legislative_initiative", "representative", "institution", "budget_entity"
+    "legal_provision",
+    "legislative_initiative",
+    "representative",
+    "institution",
+    "budget_entity",
+    "contract",
 ]
 
 assert set(RecordType.__args__) == set(RECORD_TYPES)  # type: ignore[attr-defined]

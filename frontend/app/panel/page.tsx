@@ -30,6 +30,19 @@ async function Overview() {
             </p>
           </li>
         ) : null}
+        {steward ? (
+          <li className="rounded border border-rule bg-surface p-5">
+            <h2 className="text-xl font-semibold">
+              <Link href="/panel/calidad" className={linkClass}>
+                Calidad de los datos
+              </Link>
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              Estado de cada fuente: última carga, última actualización del publicador, registros
+              por estado de calidad y avisos para revisar.
+            </p>
+          </li>
+        ) : null}
         {user.role === "admin" ? (
           <>
             <li className="rounded border border-rule bg-surface p-5">

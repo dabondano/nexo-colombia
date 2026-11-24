@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   budgetEntityPath,
   constitutionProvisionPath,
+  contractPath,
   recordExists,
   representativePath,
 } from "@/lib/api";
@@ -44,6 +45,8 @@ function apiPathFor(pathname: string): string | typeof MALFORMED | null {
       return `/initiatives/${encodeURIComponent(decoded)}`;
     case "presupuesto":
       return budgetEntityPath(decoded);
+    case "contratos":
+      return contractPath(decoded);
     case "representantes":
       return representativePath(decoded);
     case "constitucion":
@@ -97,6 +100,7 @@ export const config = {
     "/legislacion/:id",
     "/representantes/:id",
     "/presupuesto/:codigo",
+    "/contratos/:id",
     "/constitucion/:clave",
     "/aprender/:leccion",
     "/ingresar",
