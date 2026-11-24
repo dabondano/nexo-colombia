@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LESSONS, REVIEW_STATUS } from "@/lib/lessons";
+import { Suspense } from "react";
+import { LessonReviewFallback, LessonReviewNotice } from "@/components/ReviewNotice";
+import { LESSONS } from "@/lib/lessons";
 
 export const metadata: Metadata = {
   title: "Aprender",
@@ -25,10 +27,9 @@ export default function AprenderPage() {
           para que pueda comprobarla.
         </p>
       </header>
-      <p role="note" className="rounded border border-warn bg-surface p-5">
-        <span className="font-semibold text-warn">Estado del contenido: </span>
-        {REVIEW_STATUS}
-      </p>
+      <Suspense fallback={<LessonReviewFallback />}>
+        <LessonReviewNotice />
+      </Suspense>
       <ol className="grid gap-4 sm:grid-cols-2">
         {LESSONS.map((lesson, index) => (
           <li

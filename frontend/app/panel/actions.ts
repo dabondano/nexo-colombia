@@ -3,6 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { LESSONS } from "@/lib/lessons";
+import { lessonFingerprint } from "@/lib/review";
 import { SESSION_COOKIE, sessionToken, staffRequest, type Role, type StaffUser } from "@/lib/staff";
 
 /**
@@ -11,7 +13,13 @@ import { SESSION_COOKIE, sessionToken, staffRequest, type Role, type StaffUser }
  * role of every request. Next.js rejects actions posted from other origins.
  */
 
-export type FormState = { error?: string; message?: string; issued?: { email: string; password: string } };
+export type FormState = {
+  error?: string;
+  message?: string;
+  issued?: { email: string; password: string };
+  // What was typed, returned with an error so the form can show it again (never passwords).
+  values?: Record<string, string>;
+};
 
 const ROLES: Role[] = ["admin", "data_steward", "legal_reviewer"];
 
@@ -23,13 +31,13 @@ function text(formData: FormData, name: string): string {
 export async function signIn(_state: FormState, formData: FormData): Promise<FormState> {
   const email = text(formData, "email").trim();
   const password = text(formData, "password");
-  if (!email || !password) return { error: "Escriba su correo y su contraseña." };
+  if (!email || !password) return { error: "Escriba su correo y su contraseña.", values: { email } };
 
   const result = await staffRequest<{ token: string; expires_at: string; user: StaffUser }>(
     "/auth/login",
     { method: "POST", body: { email, password }, token: "" },
   );
-  if (!result.ok) return { error: result.reason };
+  if (!result.ok) return { error: result.reason, values: { email } };
 
   (await cookies()).set(SESSION_COOKIE, result.data.token, {
     httpOnly: true,
@@ -64,7 +72,12 @@ export async function changePassword(_state: FormState, formData: FormData): Pro
 
 export async function createUser(_state: FormState, formData: FormData): Promise<FormState> {
   const role = text(formData, "role") as Role;
-  if (!ROLES.includes(role)) return { error: "Elija un rol." };
+  const values = {
+    email: text(formData, "email"),
+    display_name: text(formData, "display_name"),
+    role,
+  };
+  if (!ROLES.includes(role)) return { error: "Elija un rol.", values };
   const result = await staffRequest<{ user: StaffUser; temporary_password: string }>(
     "/admin/users",
     {
@@ -72,7 +85,7 @@ export async function createUser(_state: FormState, formData: FormData): Promise
       body: { email: text(formData, "email").trim(), display_name: text(formData, "display_name").trim(), role },
     },
   );
-  if (!result.ok) return { error: result.reason };
+  if (!result.ok) return { error: result.reason, values };
   revalidatePath("/panel/usuarios");
   return {
     message: "Cuenta creada.",
@@ -94,6 +107,32 @@ export async function updateUser(_state: FormState, formData: FormData): Promise
   if (!result.ok) return { error: result.reason };
   revalidatePath("/panel/usuarios");
   return { message: "Cambios guardados." };
+}
+
+export async function recordReview(_state: FormState, formData: FormData): Promise<FormState> {
+  const type = text(formData, "content_type");
+  const key = text(formData, "content_key");
+  const decision = text(formData, "decision");
+  const values = { decision, notes: text(formData, "notes") };
+  if (decision !== "approved" && decision !== "changes_requested") {
+    return { error: "Elija una decisión.", values };
+  }
+  let fingerprint: string | undefined;
+  if (type === "lesson") {
+    // Computed here, from the lesson as published, never taken from the form.
+    const lesson = LESSONS.find((item) => item.slug === key);
+    if (!lesson) return { error: "Lección no encontrada." };
+    fingerprint = lessonFingerprint(lesson);
+  } else if (type !== "constitution_provision") {
+    return { error: "Tipo de contenido no válido." };
+  }
+  const result = await staffRequest("/reviews", {
+    method: "POST",
+    body: { content_type: type, content_key: key, fingerprint, decision, notes: values.notes },
+  });
+  if (!result.ok) return { error: result.reason, values };
+  revalidatePath("/panel/revision", "layout");
+  return { message: "Revisión registrada." };
 }
 
 export async function resetPassword(_state: FormState, formData: FormData): Promise<FormState> {

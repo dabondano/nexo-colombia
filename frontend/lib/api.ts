@@ -216,6 +216,7 @@ export type Provision = {
   ancestors: ProvisionRef[];
   segments: Segment[];
   recorded_at: string | null;
+  version_id: string | null;
   previous: ProvisionRef | null;
   next: ProvisionRef | null;
   provenance: Provenance;
@@ -314,6 +315,19 @@ export const fetchRepresentativeFilters = () =>
   getJson<RepresentativeFilters>("/representatives/filters");
 export const representativePath = (id: string) => `/representatives/${encodeURIComponent(id)}`;
 export const fetchRepresentative = (id: string) => getJson<Representative>(representativePath(id));
+
+export type ReviewContentType = "lesson" | "constitution_provision";
+
+export type PublicReview = {
+  content_type: ReviewContentType;
+  content_key: string;
+  fingerprint: string;
+  decision: "approved" | "changes_requested";
+  reviewed_at: string;
+};
+
+export const fetchLatestReviews = (type: ReviewContentType, key?: string) =>
+  getJson<PublicReview[]>("/reviews/latest", { content_type: type, content_key: key });
 
 export const CONSTITUTION_SLUG = "constitucion-politica-1991";
 export const fetchInstrument = (slug: string) =>

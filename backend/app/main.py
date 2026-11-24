@@ -15,6 +15,8 @@ from app.core.config import get_settings
 from app.core.db import get_session
 from app.law.router import instruments_router, provisions_router
 from app.legislation.router import router as initiatives_router
+from app.review.router import public_router as reviews_public_router
+from app.review.router import staff_router as reviews_staff_router
 from app.search.router import router as search_router
 from app.sources.router import router as sources_router
 
@@ -66,6 +68,9 @@ def create_app() -> FastAPI:
     app.include_router(search_router, prefix=API_PREFIX)
     app.include_router(auth_router, prefix=API_PREFIX)
     app.include_router(admin_router, prefix=API_PREFIX)
+    # Public route first: "/reviews/latest" must not be read as a staff route.
+    app.include_router(reviews_public_router, prefix=API_PREFIX)
+    app.include_router(reviews_staff_router, prefix=API_PREFIX)
     return app
 
 

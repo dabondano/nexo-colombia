@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import {
   changePassword,
   createUser,
+  recordReview,
   resetPassword,
   signIn,
   updateUser,
@@ -50,6 +51,7 @@ function Input(props: {
   autoComplete?: string;
   required?: boolean;
   maxLength?: number;
+  defaultValue?: string;
 }) {
   const id = `campo-${props.name}`;
   return (
@@ -64,6 +66,7 @@ function Input(props: {
         autoComplete={props.autoComplete}
         required={props.required ?? true}
         maxLength={props.maxLength ?? 320}
+        defaultValue={props.defaultValue}
         className={fieldClass}
       />
     </div>
@@ -74,7 +77,7 @@ export function LoginForm() {
   const [state, action, pending] = useActionState(signIn, {});
   return (
     <form action={action} className="flex max-w-md flex-col gap-4 rounded border border-rule bg-surface p-5">
-      <Input name="email" label="Correo" type="email" autoComplete="username" />
+      <Input name="email" label="Correo" type="email" autoComplete="username" defaultValue={state.values?.email} />
       <Input name="password" label="Contraseña" type="password" autoComplete="current-password" maxLength={128} />
       <Feedback state={state} />
       <div>
@@ -103,7 +106,7 @@ export function PasswordForm() {
   );
 }
 
-function RoleSelect({ id, defaultValue }: { id: string; defaultValue?: Role }) {
+function RoleSelect({ id, defaultValue }: { id: string; defaultValue?: Role | "" }) {
   return (
     <select id={id} name="role" defaultValue={defaultValue ?? ""} required className={fieldClass}>
       {defaultValue ? null : <option value="">Elija un rol</option>}
@@ -121,13 +124,13 @@ export function CreateUserForm() {
   return (
     <form action={action} className="flex flex-col gap-4 rounded border border-rule bg-surface p-5">
       <div className="grid gap-4 sm:grid-cols-3">
-        <Input name="display_name" label="Nombre" maxLength={200} />
-        <Input name="email" label="Correo" type="email" />
+        <Input name="display_name" label="Nombre" maxLength={200} defaultValue={state.values?.display_name} />
+        <Input name="email" label="Correo" type="email" defaultValue={state.values?.email} />
         <div className="flex flex-col gap-1">
           <label htmlFor="campo-rol-nuevo" className="text-sm font-medium">
             Rol
           </label>
-          <RoleSelect id="campo-rol-nuevo" />
+          <RoleSelect id="campo-rol-nuevo" defaultValue={(state.values?.role as Role | undefined) ?? ""} />
         </div>
       </div>
       <Feedback state={state} />
@@ -188,5 +191,58 @@ export function UserControls({
       <Feedback state={toggleState} />
       <Feedback state={resetState} />
     </div>
+  );
+}
+
+export function ReviewForm({ contentType, contentKey }: { contentType: string; contentKey: string }) {
+  const [state, action, pending] = useActionState(recordReview, {});
+  return (
+    <form action={action} className="flex flex-col gap-4 rounded border border-rule bg-surface p-5">
+      <input type="hidden" name="content_type" value={contentType} />
+      <input type="hidden" name="content_key" value={contentKey} />
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-sm font-medium">Decisión</legend>
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="decision"
+            value="approved"
+            required
+            defaultChecked={state.values?.decision === "approved"}
+          />{" "}
+          Aprobar el contenido tal
+          como se publica ahora
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="decision"
+            value="changes_requested"
+            required
+            defaultChecked={state.values?.decision === "changes_requested"}
+          />{" "}
+          Pedir cambios
+        </label>
+      </fieldset>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="campo-notas" className="text-sm font-medium">
+          Notas para el equipo (obligatorias si pide cambios; no se publican)
+        </label>
+        <textarea
+          id="campo-notas"
+          name="notes"
+          rows={5}
+          maxLength={5000}
+          defaultValue={state.values?.notes}
+          className={fieldClass}
+        />
+      </div>
+      <Feedback state={state} />
+      <div>
+        <button type="submit" className={buttonClass} disabled={pending}>
+          {pending ? "Registrando…" : "Registrar revisión"}
+        </button>
+      </div>
+    </form>
   );
 }

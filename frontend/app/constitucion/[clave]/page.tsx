@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Notice } from "@/components/Notice";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
+import { ProvisionReviewNotice } from "@/components/ReviewNotice";
 import { SourceText, hasStruckText } from "@/components/SourceText";
 import {
   fetchConstitutionProvision,
@@ -167,6 +168,10 @@ async function ProvisionRecord({
         <Neighbour item={provision.previous} label="Anterior" />
         <Neighbour item={provision.next} label="Siguiente" />
       </nav>
+
+      <Suspense fallback={null}>
+        <ProvisionReviewNotice path={provision.path} versionId={provision.version_id} />
+      </Suspense>
 
       <p className="max-w-3xl text-sm text-ink-muted">
         {provision.instrument.edition_note}

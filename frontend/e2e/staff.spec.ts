@@ -108,3 +108,37 @@ test("revisión jurídica: sin acceso a sincronizaciones; cerrar sesión", async
   await page.goto("/panel");
   await expect(page).toHaveURL(/\/ingresar$/);
 });
+
+test("revisión jurídica: aprobar una lección y pedir cambios en un artículo", async ({ page }) => {
+  await signIn(page, REVIEWER);
+  await page.getByRole("link", { name: "Revisión jurídica" }).first().click();
+  await expect(page.getByRole("heading", { level: 1, name: "Revisión jurídica" })).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByRole("link", { name: "Cómo está organizado el Estado" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /^Lección:/ })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByLabel("Aprobar el contenido tal como se publica ahora").check();
+  await page.getByRole("button", { name: "Registrar revisión" }).click();
+  await expect(page.getByText("Revisión registrada.")).toBeVisible();
+  await expect(page.getByText("Corresponde al contenido actual").first()).toBeVisible();
+
+  await page.goto("/aprender/estructura-del-estado");
+  await expect(page.getByRole("note").filter({ hasText: "Estado del contenido" })).toContainText(
+    "Revisado por el equipo de revisión jurídica de NEXO",
+  );
+
+  await page.goto("/panel/revision/articulo/articulo-11");
+  await page.getByLabel("Pedir cambios").check();
+  await page.getByRole("button", { name: "Registrar revisión" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "notas" })).toBeVisible();
+  const note = `Nota interna de prueba ${Date.now()}`;
+  await page.getByLabel(/Notas para el equipo/).fill(note);
+  await page.getByRole("button", { name: "Registrar revisión" }).click();
+  await expect(page.getByText(note)).toBeVisible();
+
+  await page.goto("/constitucion/articulo-11");
+  await expect(page.getByRole("heading", { level: 1, name: /Artículo 11/ })).toBeVisible();
+  await expect(page.getByText(note)).toHaveCount(0);
+  await expect(page.getByText("Revisión jurídica:")).toHaveCount(0);
+});
