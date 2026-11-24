@@ -17,7 +17,7 @@ from app.search.schemas import SearchHit, SearchPage, TypeCount
 router = APIRouter(prefix="/search", tags=["search"])
 
 SessionDep = Annotated[Session, Depends(get_session)]
-RecordType = Literal["legal_provision", "legislative_initiative", "institution"]
+RecordType = Literal["legal_provision", "legislative_initiative", "representative", "institution"]
 
 assert set(RecordType.__args__) == set(RECORD_TYPES)  # type: ignore[attr-defined]
 

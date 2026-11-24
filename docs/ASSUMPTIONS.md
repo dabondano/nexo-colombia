@@ -49,3 +49,13 @@
 - Assumption: in Función Pública's edition, wording printed after the mark "TEXTO ANTERIOR" in an article cannot be safely classified as earlier or current wording.
 - Reason: the page marks where earlier wording begins but not where it ends, and in some articles current paragraphs follow it · Impact if wrong: none for accuracy, since NEXO shows that part apart with a warning and leaves it out of search; the cost is that 73 articles are marked "Requiere revisión".
 - Owner/verification: legal reviewer; a consolidated source with validity dates (SUIN-Juriscol) would remove the need.
+
+### Assumption A-011
+- Assumption: in the Cámara representatives dataset (S-010) each column holds the value named by the next column, and the two rows published for each member describe the same member, the more complete one being correct.
+- Reason: checked on all 362 rows on 2026-11-18: every "circunscripcion" value is an e-mail, every "_" value is a name, the 181 pairs differ only by added fields · Impact if wrong: a value could appear under the wrong heading. A row in any other layout is rejected instead of being guessed, and every record says the columns were reassigned.
+- Owner/verification: data steward; report the defect to the Cámara and re-check when the dataset changes.
+
+### Assumption A-012
+- Assumption: a bill author whose published name matches exactly (ignoring case, accents and punctuation) the name of exactly one representative of the 2026-2027 list, on a bill filed from 20 July 2026, is that representative.
+- Reason: rule chosen by the owner on 2026-11-18; the source does not identify authors. On the first run 1,753 of 2,325 author names on 302 bills were linked, none was ambiguous, and only one probable shortened name ("Esneyder Gómez", 10 bills) was left unlinked · Impact if wrong: a bill could be shown under the wrong person. Links are labelled "Hipótesis analítica" and the published text is always shown.
+- Owner/verification: data steward; sample links against the bills' pages at camara.gov.co.

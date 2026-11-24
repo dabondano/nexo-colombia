@@ -17,6 +17,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.catalog.models import Institution
+from app.congress.models import Person, PositionHolding
 from app.ingestion.text import normalize_for_search
 from app.law.models import LegalInstrument, LegalProvision
 from app.legislation.models import LegislativeInitiative
@@ -29,7 +30,8 @@ WEIGHTS: dict[str, ColumnElement[Any]] = {w: literal_column(f"'{w}'") for w in "
 INSTITUTION = "institution"
 LEGISLATIVE_INITIATIVE = "legislative_initiative"
 LEGAL_PROVISION = "legal_provision"
-RECORD_TYPES = (LEGAL_PROVISION, LEGISLATIVE_INITIATIVE, INSTITUTION)
+REPRESENTATIVE = "representative"
+RECORD_TYPES = (LEGAL_PROVISION, LEGISLATIVE_INITIATIVE, REPRESENTATIVE, INSTITUTION)
 SUMMARY_LENGTH = 240
 
 
@@ -139,6 +141,20 @@ def initiative_entry(initiative: LegislativeInitiative) -> SearchEntry:
             "B": [initiative.law_type, initiative.commission, initiative.legislature],
             "C": [initiative.purpose, initiative.status],
             "D": [initiative.authors_text],
+        },
+    )
+
+
+def representative_entry(holding: PositionHolding, person: Person) -> SearchEntry:
+    return SearchEntry(
+        record_type=REPRESENTATIVE,
+        record_id=holding.id,
+        title=person.full_name,
+        summary=_join([holding.position, holding.constituency, holding.party, holding.period]),
+        weighted_text={
+            "A": [person.full_name],
+            "B": [holding.constituency, holding.party, holding.position],
+            "C": [holding.corporation, holding.period],
         },
     )
 

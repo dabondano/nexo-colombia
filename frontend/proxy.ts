@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { constitutionProvisionPath, recordExists } from "@/lib/api";
+import { constitutionProvisionPath, recordExists, representativePath } from "@/lib/api";
 import { LESSONS } from "@/lib/lessons";
 
 /**
@@ -33,6 +33,8 @@ function apiPathFor(pathname: string): string | typeof MALFORMED | null {
       return `/institutions/${encodeURIComponent(decoded)}`;
     case "legislacion":
       return `/initiatives/${encodeURIComponent(decoded)}`;
+    case "representantes":
+      return representativePath(decoded);
     case "constitucion":
       return constitutionProvisionPath(decoded);
     default:
@@ -63,6 +65,7 @@ export const config = {
   matcher: [
     "/instituciones/:id",
     "/legislacion/:id",
+    "/representantes/:id",
     "/constitucion/:clave",
     "/aprender/:leccion",
   ],

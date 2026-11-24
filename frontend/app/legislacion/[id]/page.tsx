@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Field, NOT_IN_SOURCE, Notice } from "@/components/Notice";
+import { AssociationNote } from "@/components/AssociationNote";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
 import { fetchInitiative } from "@/lib/api";
 import { formatCalendarDate } from "@/lib/format";
@@ -55,10 +56,37 @@ async function InitiativeRecord({ params }: { params: Promise<{ id: string }> })
           {bill.observations ? <Field term="Observaciones">{bill.observations}</Field> : null}
         </dl>
         <p className="mt-4 text-sm text-ink-muted">
-          Los autores aparecen como texto, tal como los publica la fuente; todavía no están
-          enlazados a perfiles. La fuente no incluye el historial de debates ni las votaciones.
+          Los autores aparecen como texto, tal como los publica la fuente. La fuente no incluye
+          el historial de debates ni las votaciones.
         </p>
       </section>
+
+      {bill.linked_authors.length > 0 ? (
+        <section
+          aria-labelledby="titulo-autores"
+          className="rounded border border-rule bg-surface p-5"
+        >
+          <h2 id="titulo-autores" className="text-xl font-semibold">
+            Autores con ficha de representante
+          </h2>
+          <ul className="mt-3 flex list-disc flex-col gap-1 pl-5 text-sm">
+            {bill.linked_authors.map((author) => (
+              <li key={author.representative_id}>
+                <Link
+                  href={`/representantes/${author.representative_id}`}
+                  className="text-brand underline underline-offset-4"
+                >
+                  {author.full_name}
+                </Link>
+                {author.author_name !== author.full_name ? (
+                  <span className="text-ink-muted"> (en la fuente: «{author.author_name}»)</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          <AssociationNote label={bill.linked_authors_label} rule={bill.linked_authors_rule} />
+        </section>
+      ) : null}
 
       <ProvenancePanel
         provenance={bill.provenance}

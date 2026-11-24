@@ -35,7 +35,7 @@ def contains_all_words(
     return [column.like(f"%{_escape_like(word)}%", escape="\\") for word in words]
 
 
-def count_rows(session: Session, statement: Select[Any]) -> int:
+def count_rows(session: Session, statement: Select[*tuple[Any, ...]]) -> int:
     return session.scalar(select(func.count()).select_from(statement.subquery())) or 0
 
 

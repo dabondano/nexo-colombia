@@ -5,6 +5,7 @@ from datetime import date
 
 from pydantic import BaseModel, ConfigDict
 
+from app.congress.schemas import LinkedAuthor
 from app.core.labels import EpistemicLabel
 from app.core.listing import FilterOption
 from app.core.provenance import ProvenanceOut
@@ -31,8 +32,12 @@ class InitiativeOut(InitiativeSummary):
     senado_filed_on: date | None
     purpose: str | None
     observations: str | None
-    # Authors exactly as the source publishes them; not linked to person records yet.
+    # Authors exactly as the source publishes them.
     authors_text: str | None
+    # Authors NEXO linked to a representative record (an analytical association).
+    linked_authors: list[LinkedAuthor]
+    linked_authors_label: EpistemicLabel = EpistemicLabel.HIPOTESIS_ANALITICA
+    linked_authors_rule: str
     jurisdiction_code: str
     # Registry data copied from an official database (brief section 2.1).
     epistemic_label: EpistemicLabel = EpistemicLabel.HECHO_DOCUMENTADO

@@ -107,9 +107,58 @@ export type Initiative = InitiativeSummary & {
   purpose: string | null;
   observations: string | null;
   authors_text: string | null;
+  linked_authors: LinkedAuthor[];
+  linked_authors_label: string;
+  linked_authors_rule: string;
   jurisdiction_code: string;
   epistemic_label: string;
   provenance: Provenance;
+};
+
+export type LinkedAuthor = {
+  representative_id: string;
+  full_name: string;
+  author_name: string;
+};
+
+export type RepresentativeSummary = {
+  id: string;
+  person_id: string;
+  full_name: string;
+  position: string;
+  corporation: string;
+  period: string;
+  constituency: string | null;
+  party: string | null;
+  seat_basis: string | null;
+  data_quality_status: string;
+};
+
+export type AuthoredInitiative = {
+  id: string;
+  title: string;
+  camara_number: string | null;
+  senado_number: string | null;
+  legislature: string | null;
+  status: string | null;
+  author_name: string;
+};
+
+export type Representative = RepresentativeSummary & {
+  email: string | null;
+  office: string | null;
+  phone: string | null;
+  jurisdiction_code: string;
+  epistemic_label: string;
+  provenance: Provenance;
+  authored_initiatives: AuthoredInitiative[];
+  authored_initiatives_label: string;
+  authored_initiatives_rule: string;
+};
+
+export type RepresentativeFilters = {
+  constituency: FilterOption[];
+  party: FilterOption[];
 };
 
 export type InitiativeFilters = {
@@ -172,7 +221,11 @@ export type Provision = {
   provenance: Provenance;
 };
 
-export type RecordType = "legal_provision" | "legislative_initiative" | "institution";
+export type RecordType =
+  | "legal_provision"
+  | "legislative_initiative"
+  | "representative"
+  | "institution";
 
 export type SearchHit = {
   record_type: RecordType;
@@ -254,6 +307,13 @@ export const fetchInitiatives = (params: Params) =>
 export const fetchInitiativeFilters = () => getJson<InitiativeFilters>("/initiatives/filters");
 export const fetchInitiative = (id: string) =>
   getJson<Initiative>(`/initiatives/${encodeURIComponent(id)}`);
+
+export const fetchRepresentatives = (params: Params) =>
+  getJson<Page<RepresentativeSummary>>("/representatives", params);
+export const fetchRepresentativeFilters = () =>
+  getJson<RepresentativeFilters>("/representatives/filters");
+export const representativePath = (id: string) => `/representatives/${encodeURIComponent(id)}`;
+export const fetchRepresentative = (id: string) => getJson<Representative>(representativePath(id));
 
 export const CONSTITUTION_SLUG = "constitucion-politica-1991";
 export const fetchInstrument = (slug: string) =>

@@ -58,6 +58,22 @@ REGISTRY: list[RegistryEntry] = [
         ),
     },
     {
+        "dataset_id": "5pt5-nxdp",
+        "name": "Representantes período 2026-2027",
+        "institution": "Cámara de Representantes",
+        "category": "legislación",
+        "update_frequency": None,
+        "access_restrictions": (
+            "Incluye correo, oficina y extensión institucionales de cada representante. "
+            "NEXO los muestra como datos de contacto institucional publicados por la Cámara."
+        ),
+        "known_limitations": (
+            "Columnas desplazadas una posición respecto de sus nombres (por ejemplo, "
+            "«circunscripcion» contiene el correo); cada representante aparece en dos filas; "
+            "no incluye comisiones ni fechas de posesión."
+        ),
+    },
+    {
         "dataset_id": "xjxk-qhsc",
         "name": "Ejecución Presupuestal del Presupuesto General de la Nación",
         "institution": "Ministerio de Hacienda y Crédito Público",
