@@ -52,6 +52,9 @@ CHAPTER = "capitulo"
 SECTION = "seccion"
 SUBSECTION = "subseccion"
 HEADING = "encabezado"
+# A statute compiled inside a decree's article (Decreto 111 de 1996).
+COMPILATION = "compilacion"
+COMPILATION_PATH = "estatuto"
 # Outer to inner. A heading printed without a label sits below the innermost division.
 RANKS = {PART: 0, BOOK: 1, TITLE: 2, CHAPTER: 3, SECTION: 4, SUBSECTION: 5, HEADING: 6}
 LABELS = {
@@ -79,6 +82,8 @@ _DIVISION = re.compile(
     re.I,
 )
 _BARE_ROMAN = re.compile(r"^([IVXLC]+)\.?\s+(\S.*)$")
+# "II. De los principios del sistema presupuestal", in any case (compilations only).
+_ROMAN_HEADING = re.compile(r"^([IVXLC]+)\.\s+([A-ZÁÉÍÓÚ].{2,200})$")
 # "ARTÍOCULO 9" (sic, Ley 5 de 1992) and "ARTÍCULO. 78" (Ley 1952 de 2019) are accepted too.
 _ARTICLE = re.compile(
     r"^ART[IÍ]O?CULO\.?\s+(TRANSITORIO\b\s*)?(\d+)?\s*(?:[oº°](?![a-z]))?"
@@ -98,6 +103,13 @@ _LOOSE_NOTE = re.compile(
     re.I,
 )
 _EDITOR_MARK = re.compile(r"^\*[^*]+\*$")
+# An editor's note opening an article's first line, without parentheses:
+# "Reglamentado parcialmente por el Decreto Nacional 2712 de 2014." (Decreto 111 de 1996).
+_INLINE_NOTE = re.compile(
+    r"^((?:Reglamentad|Modificad|Adicionad|Sustituid|Subrogad|Derogad|Corregid)[oa]s?\b"
+    r"[^.]{0,200}?\b(?:Ley|Decreto|Acto Legislativo|Sentencia)\b"
+    r"[^.]{0,80}?\b(?:de|del)\s+\d{4}\.)\s*"
+)
 
 
 @dataclass
@@ -115,8 +127,10 @@ class ParsedStatute:
 
     @property
     def instrument_type(self) -> str:
-        """ "ley", "ley estatutaria" or "ley orgánica", as the heading says."""
+        """The type as the heading says: ley, ley estatutaria, ley orgánica or decreto."""
         plain = _plain(self.heading)
+        if plain.startswith("decreto"):
+            return "decreto"
         for kind in ("ley estatutaria", "ley organica"):
             if plain.startswith(kind):
                 return "ley orgánica" if kind == "ley organica" else kind
@@ -175,7 +189,11 @@ class _Open:
 
 
 class _Reader:
-    def __init__(self) -> None:
+    def __init__(self, *, roman_headings: bool = False) -> None:
+        # Compiled statutes print chapter headings as "II. De ..." right before an
+        # article, often not bold; only there is that pattern read as a heading.
+        self.roman_headings = roman_headings
+        self.next_block: Block | None = None
         self.provisions: list[ParsedProvision] = []
         self.stack: list[_Open] = []
         self.current: ParsedProvision | None = None
@@ -327,10 +345,16 @@ class _Reader:
         rest = block.text[match.end() :].strip()
         while rest:
             note = _LEADING_NOTE.match(rest)
-            if not note or not _EDITORIAL_START.match(note.group(1).strip()):
-                break
-            self._segment(NOTE, f"({note.group(1)})")
-            rest = rest[note.end() :].strip()
+            if note and _EDITORIAL_START.match(note.group(1).strip()):
+                self._segment(NOTE, f"({note.group(1)})")
+                rest = rest[note.end() :].strip()
+                continue
+            inline = _INLINE_NOTE.match(rest)
+            if inline:
+                self._segment(NOTE, inline.group(1))
+                rest = rest[inline.end() :].strip()
+                continue
+            break
         if rest:
             self._wording(rest)
         return True
@@ -373,6 +397,16 @@ class _Reader:
             return
         if self.quoting:
             self._wording(text)
+            return
+        roman = _ROMAN_HEADING.match(text) if self.roman_headings else None
+        if roman and self.next_block is not None and _ARTICLE.match(self.next_block.text.strip()):
+            self._open_division(
+                CHAPTER,
+                roman.group(1),
+                roman.group(2).strip(),
+                f"La fuente imprime «{roman.group(1)}» sin la palabra «CAPÍTULO»; NEXO lo lee "
+                "como un capítulo.",
+            )
             return
         if self._try_division(block):
             return
@@ -458,3 +492,72 @@ class _Reader:
 def read_statute(blocks: list[Block], number: str, year: int) -> ParsedStatute:
     """Reads the page of law `number` of `year`; its first line must name that law."""
     return _Reader().read(blocks, number, year)
+
+
+def _article_number(block: Block) -> int | None:
+    match = _ARTICLE.match(block.text.strip())
+    if not match or not match.group(2) or match.group(1) or match.group(3):
+        return None
+    return int(match.group(2))
+
+
+def read_compilation(
+    blocks: list[Block], number: str, year: int, name: str, compiled_articles: int
+) -> ParsedStatute:
+    """A decree whose article 1 compiles a statute (Decreto 111 de 1996).
+
+    The decree's own articles are read as a decree; the compiled statute, from
+    its first heading or article 1 to its article `compiled_articles`, is read
+    on its own and shown as one division, `name`, after the decree's article 1.
+    The statute's articles are labelled "Artículo N del Estatuto" and addressed
+    "estatuto-articulo-N", so they never clash with the decree's.
+    """
+    numbers = [_article_number(block) for block in blocks]
+    first = next((i for i, n in enumerate(numbers) if n == 1), None)
+    start = next(
+        (i for i, n in enumerate(numbers) if n == 1 and first is not None and i > first), None
+    )
+    if first is None or start is None:
+        raise StructureError("La página no trae el artículo 1 del estatuto compilado")
+    if start - 1 > first and _ROMAN_HEADING.match(blocks[start - 1].text.strip()):
+        start -= 1
+    last = next((i for i, n in enumerate(numbers) if i > start and n == compiled_articles), None)
+    end = next((i for i, n in enumerate(numbers) if last is not None and i > last and n == 2), None)
+    if last is None or end is None:
+        raise StructureError(
+            f"La página no trae el artículo {compiled_articles} del estatuto compilado "
+            "seguido del artículo 2 del decreto"
+        )
+
+    decree = _Reader().read(blocks[:start] + blocks[end:], number, year)
+    inner = _Reader(roman_headings=True)
+    region = blocks[start:end]
+    for index, block in enumerate(region):
+        inner.next_block = region[index + 1] if index + 1 < len(region) else None
+        inner._body(block)
+    if inner.quoting or inner.last_article != compiled_articles:
+        raise StructureError(f"El estatuto compilado no termina en su artículo {compiled_articles}")
+
+    def compiled_path(path: str, kind: str) -> str:
+        return f"{COMPILATION_PATH}-{path}" if kind == ARTICLE else f"{COMPILATION_PATH}/{path}"
+
+    kinds = {p.path: p.kind for p in inner.provisions}
+    wrapper = ParsedProvision(COMPILATION_PATH, None, COMPILATION, name, None, None)
+    compiled: list[ParsedProvision] = [wrapper]
+    for provision in inner.provisions:
+        parent = provision.parent_path
+        provision.parent_path = compiled_path(parent, kinds[parent]) if parent else COMPILATION_PATH
+        provision.path = compiled_path(provision.path, provision.kind)
+        if provision.kind == ARTICLE:
+            provision.label = f"{provision.label} del Estatuto"
+        compiled.append(provision)
+
+    first_article = next(i for i, p in enumerate(decree.provisions) if p.kind == ARTICLE)
+    ordered = (
+        decree.provisions[: first_article + 1] + compiled + decree.provisions[first_article + 1 :]
+    )
+    for position, provision in enumerate(ordered, start=1):
+        provision.position = position
+    decree.provisions = ordered
+    decree.article_count += inner.last_article
+    return decree

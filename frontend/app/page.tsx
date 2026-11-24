@@ -117,9 +117,9 @@ async function AvailableData() {
     {
       sourceRef: "funcionpublica.gov.co:gestor-normativo:leyes",
       total: instruments.ok
-        ? instruments.data.filter((item) => item.instrument_type.startsWith("ley")).length
+        ? instruments.data.filter((item) => item.instrument_type !== "constitución").length
         : 0,
-      noun: "leyes clave, artículo por artículo",
+      noun: "leyes y decretos clave, artículo por artículo",
       href: "/leyes",
       linkLabel: "Leer las leyes",
     },

@@ -8,7 +8,7 @@ import { formatCalendarDate } from "@/lib/format";
 export const metadata: Metadata = {
   title: "Leyes",
   description:
-    "Leyes clave sobre transparencia, contratación pública, participación y el Congreso, artículo por artículo y con su fuente.",
+    "Leyes clave sobre transparencia, contratación pública, participación y el Congreso, y el Estatuto Orgánico del Presupuesto, artículo por artículo y con su fuente.",
 };
 
 const linkClass = "text-brand underline underline-offset-4";
@@ -18,7 +18,8 @@ async function Laws() {
   if (!result.ok) {
     return <Notice>{result.reason} Las leyes no están disponibles en este momento.</Notice>;
   }
-  const laws = result.data.filter((item) => item.instrument_type.startsWith("ley"));
+  // Everything but the Constitution, which has its own section.
+  const laws = result.data.filter((item) => item.instrument_type !== "constitución");
   if (laws.length === 0) {
     return <Notice>Todavía no se han cargado leyes en NEXO.</Notice>;
   }
@@ -50,8 +51,9 @@ export default function LeyesPage() {
         <h1 className="font-serif text-3xl font-semibold text-brand">Leyes</h1>
         <p className="max-w-3xl text-lg text-ink-muted">
           Una selección de leyes clave sobre transparencia, contratación pública, participación
-          ciudadana, administración pública y el Congreso, artículo por artículo, tal como las
-          publica Función Pública en su Gestor Normativo. Es una edición informativa: el texto con
+          ciudadana, administración pública y el Congreso, y el decreto que compila el Estatuto
+          Orgánico del Presupuesto, artículo por artículo, tal como los publica Función Pública en
+          su Gestor Normativo. Es una edición informativa: el texto con
           valor oficial es el del Diario Oficial.
         </p>
         <p className="text-sm">
