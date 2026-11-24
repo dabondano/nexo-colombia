@@ -114,5 +114,5 @@ Common properties of datos.gov.co datasets: API endpoint `https://www.datos.gov.
 ### Source S-024b: Gestor Normativo, selected laws
 - Publisher: Departamento Administrativo de la Función Pública. One HTML page per law (`norma.php?i=<id>`); ids checked on 2026-11-24 by downloading each page and reading its title (app/law/statute_catalog.py).
 - Registered as `funcionpublica.gov.co:gestor-normativo:leyes`. Informative edition: the publisher does not answer for the norms' validity; the official text is the Diario Oficial's.
-- Loaded since 2026-11-24: 15 laws, one request per law and synchronization, a second apart. Pages that no longer fit the reader are recorded as rejected rows with the reason.
+- Loaded since 2026-11-24: 17 laws (Ley 610 de 2000 and Ley 1952 de 2019 added the same day), one request per law and synchronization, a second apart. Pages that no longer fit the reader are recorded as rejected rows with the reason.
 - Verification status: Verified on 2026-11-24 by download.
