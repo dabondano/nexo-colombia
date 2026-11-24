@@ -93,6 +93,7 @@ def test_page_irregularities_are_declared() -> None:
             plain("DE LAS COMISIONES"),
             plain("Comisiones especiales."),
             article("ARTÍOCULO 2", "Dos (sic en la fuente)."),
+            article("ARTÍCULO. 2A", "Con punto tras «ARTÍCULO» (sic en la fuente)."),
             bold("CAPÍTULO CUARTO"),
             plain("DE LAS COMISIONES"),
             article("ARTÍCULO 3", "Tres."),
@@ -108,6 +109,7 @@ def test_page_irregularities_are_declared() -> None:
     assert heading.label == "Comisiones especiales." and heading.repairs
     assert by_path["articulo-2"].parent_path == "capitulo-cuarto/encabezado-1"
     assert "articulo-transitorio-1" in by_path
+    assert by_path["articulo-2-a"].label == "Artículo 2A"
     assert not any("jurisprudencia" in s.text for p in parsed.provisions for s in p.segments)
 
 

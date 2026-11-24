@@ -139,7 +139,7 @@ LAWS_REF = "funcionpublica.gov.co:gestor-normativo:leyes"
 
 
 def _laws_source() -> Source:
-    """Checked on 2026-11-24: the 15 pages of app/law/statute_catalog.py read in full."""
+    """Checked on 2026-11-24: the 17 pages of app/law/statute_catalog.py read in full."""
     return Source(
         external_ref=LAWS_REF,
         name="Gestor Normativo: leyes seleccionadas",

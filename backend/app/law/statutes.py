@@ -79,9 +79,9 @@ _DIVISION = re.compile(
     re.I,
 )
 _BARE_ROMAN = re.compile(r"^([IVXLC]+)\.?\s+(\S.*)$")
-# "ARTÍOCULO 9" (sic, Ley 5 de 1992) is accepted too.
+# "ARTÍOCULO 9" (sic, Ley 5 de 1992) and "ARTÍCULO. 78" (Ley 1952 de 2019) are accepted too.
 _ARTICLE = re.compile(
-    r"^ART[IÍ]O?CULO\s+(TRANSITORIO\b\s*)?(\d+)?\s*(?:[oº°](?![a-z]))?"
+    r"^ART[IÍ]O?CULO\.?\s+(TRANSITORIO\b\s*)?(\d+)?\s*(?:[oº°](?![a-z]))?"
     r"(?:\s?-?\s?([A-Z])(?=[.\s\-]))?\s*[.°º:\-–]*\s*",
     re.I,
 )

@@ -3,7 +3,8 @@
 participation and Congress, read article by article like the Constitution).
 
 Each page id was checked on 2026-11-24 by downloading the page and reading its
-title. To add a law, add it here and run the reader's tests against its page.
+title (Ley 610 de 2000 and Ley 1952 de 2019 added the same day, 17 laws).
+To add a law, add it here and run the reader's tests against its page.
 Decreto 111 de 1996 is not listed: it reproduces a whole statute inside its
 article 1 and needs a reader of its own.
 """
@@ -32,6 +33,7 @@ STATUTES = (
     StatuteSpec(330, "134", 1994),  # Mecanismos de participación ciudadana
     StatuteSpec(327, "152", 1994),  # Ley Orgánica del Plan de Desarrollo
     StatuteSpec(186, "489", 1998),  # Organización de la administración pública
+    StatuteSpec(5725, "610", 2000),  # Procesos de responsabilidad fiscal
     StatuteSpec(14861, "909", 2004),  # Empleo público y carrera administrativa
     StatuteSpec(184686, "1150", 2007),  # Eficiencia y transparencia en la contratación
     StatuteSpec(41249, "1437", 2011),  # Código de Procedimiento Administrativo (CPACA)
@@ -41,5 +43,6 @@ STATUTES = (
     StatuteSpec(65334, "1755", 2015),  # Derecho de petición
     StatuteSpec(65335, "1757", 2015),  # Participación democrática
     StatuteSpec(87302, "1909", 2018),  # Estatuto de la Oposición
+    StatuteSpec(90324, "1952", 2019),  # Código General Disciplinario
     StatuteSpec(175606, "2195", 2022),  # Transparencia, prevención y lucha contra la corrupción
 )
