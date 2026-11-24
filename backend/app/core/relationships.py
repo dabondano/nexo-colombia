@@ -24,6 +24,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
+# Registers core.source_record, which this table's foreign key points at.
+import app.sources.models  # noqa: E402, F401
 from app.core.db import CORE_SCHEMA, Base
 from app.core.labels import ConfidenceClass
 

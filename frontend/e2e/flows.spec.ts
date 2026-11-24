@@ -13,7 +13,7 @@ test("la búsqueda del encabezado lleva a un registro y a su origen", async ({ p
 
 test("los filtros y la paginación del directorio de instituciones", async ({ page }) => {
   await page.goto("/instituciones");
-  await expect(page.getByRole("status").filter({ hasText: "32 entidades" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "33 entidades" })).toBeVisible();
   await page.getByRole("link", { name: "Siguiente" }).click();
   await expect(page).toHaveURL(/pagina=2/);
   await page.goto("/instituciones");
@@ -96,6 +96,25 @@ test("el presupuesto: del total a una entidad, con la nota sobre la vigencia", a
   await expect(page.getByRole("heading", { level: 1, name: "MINISTERIO DE EJEMPLO" })).toBeVisible();
   await expect(page.getByText("80,0 % de la apropiación").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Origen de este registro" })).toBeVisible();
+});
+
+test("el presupuesto y el directorio se enlazan, y el historial muestra cada actualización", async ({
+  page,
+}) => {
+  await page.goto("/buscar?q=agencia+de+ejemplo&tipo=budget_entity");
+  await page.getByRole("link", { name: "AGENCIA DE EJEMPLO" }).click();
+  await expect(page).toHaveURL(/\/presupuesto\/99-01-00$/);
+  const directory = page.getByRole("region", { name: "En el directorio de entidades" });
+  await expect(directory.getByText("Hipótesis analítica")).toBeVisible();
+  const history = page.getByRole("region", { name: "Cifras en cada actualización de la fuente" });
+  await expect(history.getByRole("row")).toHaveCount(3);
+  await directory.getByRole("link", { name: "Agencia de Ejemplo" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Agencia de Ejemplo" })).toBeVisible();
+  await page
+    .getByRole("region", { name: "Presupuesto" })
+    .getByRole("link", { name: /Ejecución presupuestal de AGENCIA DE EJEMPLO/ })
+    .click();
+  await expect(page).toHaveURL(/\/presupuesto\/99-01-00$/);
 });
 
 test("el inicio muestra cada conjunto de datos con su cifra y su fuente", async ({ page }) => {

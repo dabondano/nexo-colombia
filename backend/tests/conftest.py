@@ -59,7 +59,7 @@ def session() -> Iterator[Session]:
                 f"{CORE_SCHEMA}.institution, {CORE_SCHEMA}.legislative_initiative, "
                 f"{CORE_SCHEMA}.relationship, {CORE_SCHEMA}.position_holding, "
                 f"{CORE_SCHEMA}.person, {CORE_SCHEMA}.content_review, {CORE_SCHEMA}.auth_session, "
-                f"{CORE_SCHEMA}.budget_execution, "
+                f"{CORE_SCHEMA}.budget_execution, {CORE_SCHEMA}.budget_snapshot, "
                 f"{CORE_SCHEMA}.audit_event, {CORE_SCHEMA}.user_account, "
                 f"{CORE_SCHEMA}.sync_reject, {CORE_SCHEMA}.source_record, "
                 f"{CORE_SCHEMA}.sync_run, {CORE_SCHEMA}.source CASCADE"

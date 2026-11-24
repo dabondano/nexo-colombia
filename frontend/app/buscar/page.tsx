@@ -15,7 +15,7 @@ import {
 export const metadata: Metadata = {
   title: "Buscar",
   description:
-    "Búsqueda en la Constitución, los proyectos de ley y las entidades públicas cargados en NEXO Colombia.",
+    "Búsqueda en la Constitución, los proyectos de ley, los representantes, las entidades públicas y su presupuesto cargados en NEXO Colombia.",
 };
 
 const PAGE_SIZE = 25;
@@ -38,6 +38,11 @@ const TYPES: Record<RecordType, { singular: string; plural: string; path: string
     path: "/representantes",
   },
   institution: { singular: "Entidad pública", plural: "Entidades públicas", path: "/instituciones" },
+  budget_entity: {
+    singular: "Presupuesto de una entidad",
+    plural: "Presupuesto de entidades",
+    path: "/presupuesto",
+  },
 };
 
 function isRecordType(value: string | undefined): value is RecordType {
@@ -65,7 +70,7 @@ function Hit({ hit }: { hit: SearchHit }) {
       </p>
       <h3 className="mt-1 text-lg font-semibold">
         <Link
-          href={`${type.path}/${hit.record_id}`}
+          href={`${type.path}/${encodeURIComponent(hit.record_key)}`}
           className="text-brand underline underline-offset-4"
         >
           {hit.title}
@@ -177,7 +182,8 @@ async function Results({ searchParams }: { searchParams: Promise<SearchParams> }
         <SearchForm q={undefined} />
         <Notice>
           Escriba una o varias palabras para buscar en la Constitución, en los proyectos de ley
-          de la Cámara de Representantes y en el directorio de entidades públicas.
+          y los representantes de la Cámara, en el directorio de entidades públicas y en el
+          presupuesto de las entidades nacionales.
         </Notice>
         <HowItWorks />
       </>

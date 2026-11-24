@@ -10,6 +10,8 @@ from collections.abc import Callable, Iterable
 
 from sqlalchemy.orm import Session
 
+from app.budget.history import record_snapshots
+from app.budget.links import index_budget_entities, link_budget_institutions
 from app.core import audit
 from app.core.db import get_engine
 from app.ingestion.datasets import bills, budget, constitution, entities, representatives
@@ -60,17 +62,26 @@ def main(argv: list[str]) -> int:
                     "rejected": result.rows_rejected,
                 },
             )
+            snapshots = record_snapshots(session) if name == "budget" else None
             session.commit()
             print(
                 f"{name}: vistos={result.rows_seen} nuevos={result.rows_new} "
                 f"modificados={result.rows_changed} sin_cambios={result.rows_unchanged} "
                 f"rechazados={result.rows_rejected}"
+                + (f" historial={snapshots}" if snapshots is not None else "")
             )
         if argv == ["all"]:
             links = link_authors(session)
             print(
                 f"autores: proyectos={links.initiatives_considered} nombres={links.authors_seen} "
                 f"vínculos={links.links} ambiguos={links.ambiguous}"
+            )
+            budget_links = link_budget_institutions(session)
+            indexed = index_budget_entities(session)
+            session.commit()
+            print(
+                f"presupuesto: entidades={budget_links.budget_entities} "
+                f"enlazadas={budget_links.linked} indexadas={indexed}"
             )
     return 0
 

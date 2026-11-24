@@ -76,6 +76,9 @@ export type Institution = InstitutionSummary & {
   latitude: number | null;
   status: string | null;
   jurisdiction_code: string;
+  budget_entity: { entity_code: string; entity_name: string } | null;
+  budget_entity_label: string;
+  budget_entity_rule: string;
   epistemic_label: string;
   provenance: Provenance;
 };
@@ -226,11 +229,13 @@ export type RecordType =
   | "legal_provision"
   | "legislative_initiative"
   | "representative"
-  | "institution";
+  | "institution"
+  | "budget_entity";
 
 export type SearchHit = {
   record_type: RecordType;
   record_id: string;
+  record_key: string;
   title: string;
   summary: string | null;
   record_date: string | null;
@@ -358,8 +363,18 @@ export type BudgetLine = {
   rates: BudgetRates;
   data_quality_status: string;
 };
+export type BudgetSnapshot = {
+  published_on: string;
+  amounts: BudgetAmounts;
+  rates: BudgetRates;
+};
 export type EntityBudgetDetail = EntityBudget & {
   sector_code: string | null;
+  linked_institution: { institution_id: string; name: string } | null;
+  linked_institution_label: string;
+  linked_institution_rule: string;
+  history: BudgetSnapshot[];
+  history_note: string;
   lines: BudgetLine[];
   data_quality_status: string;
   epistemic_label: string;
