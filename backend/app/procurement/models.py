@@ -32,6 +32,8 @@ class Contract(CanonicalRecordMixin, Base):
     institution_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey(f"{CORE_SCHEMA}.institution.id", ondelete="SET NULL"), index=True
     )
+    # How institution_id was set: "nit" (A-016) or "revision" (reviewed mapping, A-017).
+    institution_link_method: Mapped[str | None] = mapped_column(String(20))
     department: Mapped[str | None] = mapped_column(String(100))
     city: Mapped[str | None] = mapped_column(String(100))
     sector: Mapped[str | None] = mapped_column(String(200))

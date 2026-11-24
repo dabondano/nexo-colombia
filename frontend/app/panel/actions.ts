@@ -148,3 +148,39 @@ export async function resetPassword(_state: FormState, formData: FormData): Prom
     issued: { email: result.data.user.email, password: result.data.temporary_password },
   };
 }
+
+const MAPPING_KINDS = ["budget_entity", "contract_entity"];
+
+export async function createMapping(_state: FormState, formData: FormData): Promise<FormState> {
+  const kind = text(formData, "kind");
+  const institution = text(formData, "institution_id");
+  const values = { institution_id: institution, note: text(formData, "note") };
+  if (!MAPPING_KINDS.includes(kind)) return { error: "Tipo de vínculo no válido." };
+  if (!institution) return { error: "Elija la entidad del directorio.", values };
+  if (values.note.trim().length < 10) {
+    return { error: "Escriba en qué se basa el vínculo (al menos 10 caracteres).", values };
+  }
+  const result = await staffRequest("/admin/entity-mappings", {
+    method: "POST",
+    body: {
+      kind,
+      source_value: text(formData, "source_value"),
+      institution_id: institution,
+      note: values.note,
+    },
+  });
+  if (!result.ok) return { error: result.reason, values };
+  revalidatePath("/panel/vinculos");
+  redirect(`/panel/vinculos?tipo=${kind}&creado=1`);
+}
+
+export async function deleteMapping(_state: FormState, formData: FormData): Promise<FormState> {
+  const id = text(formData, "id");
+  const kind = text(formData, "kind");
+  const result = await staffRequest(`/admin/entity-mappings/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!result.ok) return { error: result.reason };
+  revalidatePath("/panel/vinculos");
+  redirect(`/panel/vinculos?tipo=${MAPPING_KINDS.includes(kind) ? kind : "budget_entity"}&eliminado=1`);
+}

@@ -79,3 +79,8 @@
 - Assumption: a contract's entity is the directory entry whose NIT equals the NIT SECOP publishes for it, when exactly one directory entry has that NIT. A tenth digit is treated as the DIAN check digit only when it is correct.
 - Reason: the NIT is an official identifier in both sources; unlike names (A-012, A-014) it does not depend on spelling. Several bodies share one legal person's NIT (561 duplicated NITs in the directory, for example Defense units), so those are left unlinked rather than guessed. Measured on 2026-11-24: 80 % of contracts in the window linked · Impact if wrong: a contract could show under a body that shares the NIT's legal person; the page states the rule.
 - Owner/verification: data steward.
+
+### Assumption A-017
+- Assumption: a link between a source's entity and the directory that a data steward made by hand, with a written reason, is good enough to show publicly, labelled as an analytical association reviewed by NEXO's team, with the reason.
+- Reason: the automatic rules (A-014 names, A-016 NIT) leave entities unlinked rather than guess; people can resolve many of them from context (an abbreviation, a regional office). Applied before the automatic rule, kept by later syncs, every creation and removal is in the audit log · Impact if wrong: a page could point to the wrong body; the reason is shown so readers can judge it, and the link can be removed.
+- Owner/verification: data steward; administrators can see who made each link.

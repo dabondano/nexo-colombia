@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, text
 
 from app.auth import models as _auth_models  # noqa: F401  (registers tables)
 from app.budget import models as _budget_models  # noqa: F401
+from app.catalog import mappings as _mapping_models  # noqa: F401
 from app.catalog import models as _catalog_models  # noqa: F401
 from app.congress import models as _congress_models  # noqa: F401
 from app.core import audit as _audit_models  # noqa: F401

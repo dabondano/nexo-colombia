@@ -3,7 +3,9 @@
 import { useActionState } from "react";
 import {
   changePassword,
+  createMapping,
   createUser,
+  deleteMapping,
   recordReview,
   resetPassword,
   signIn,
@@ -243,6 +245,82 @@ export function ReviewForm({ contentType, contentKey }: { contentType: string; c
           {pending ? "Registrando…" : "Registrar revisión"}
         </button>
       </div>
+    </form>
+  );
+}
+
+export type InstitutionOption = { id: string; name: string; detail: string | null };
+
+export function MappingForm({
+  kind,
+  sourceValue,
+  options,
+}: {
+  kind: string;
+  sourceValue: string;
+  options: InstitutionOption[];
+}) {
+  const [state, action, pending] = useActionState(createMapping, {});
+  return (
+    <form action={action} className="flex flex-col gap-4 rounded border border-rule bg-surface p-5">
+      <input type="hidden" name="kind" value={kind} />
+      <input type="hidden" name="source_value" value={sourceValue} />
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-sm font-medium">Entidad del directorio</legend>
+        {options.map((option) => (
+          <label key={option.id} className="flex items-start gap-2">
+            <input
+              type="radio"
+              name="institution_id"
+              value={option.id}
+              required
+              className="mt-1"
+              defaultChecked={state.values?.institution_id === option.id}
+            />
+            <span>
+              {option.name}
+              {option.detail ? <span className="block text-sm text-ink-muted">{option.detail}</span> : null}
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="campo-motivo" className="text-sm font-medium">
+          En qué se basa el vínculo (se muestra en las páginas públicas)
+        </label>
+        <textarea
+          id="campo-motivo"
+          name="note"
+          rows={3}
+          minLength={10}
+          maxLength={1000}
+          required
+          defaultValue={state.values?.note}
+          className={fieldClass}
+        />
+      </div>
+      <Feedback state={state} />
+      <div>
+        <button type="submit" className={buttonClass} disabled={pending}>
+          {pending ? "Guardando…" : "Guardar el vínculo"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export function DeleteMappingForm({ id, kind, label }: { id: string; kind: string; label: string }) {
+  const [state, action, pending] = useActionState(deleteMapping, {});
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="kind" value={kind} />
+      <div>
+        <button type="submit" className={secondaryClass} disabled={pending} aria-label={label}>
+          {pending ? "Eliminando…" : "Eliminar"}
+        </button>
+      </div>
+      <Feedback state={state} />
     </form>
   );
 }

@@ -338,6 +338,7 @@ def get_entity(entity_code: CodeParam, session: SessionDep) -> EntityBudgetOut:
             if (linked := institution_for_budget_entity(session, first.entity_code))
             else None
         ),
+        linked_institution_rule=linked.rule if linked else LINK_RULE,
         history=[_snapshot(snapshot) for snapshot in _history(session, first.entity_code)],
         provenance=load_provenance(session, latest.source_record_id),
     )

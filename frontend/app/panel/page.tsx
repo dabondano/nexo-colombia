@@ -43,6 +43,19 @@ async function Overview() {
             </p>
           </li>
         ) : null}
+        {steward ? (
+          <li className="rounded border border-rule bg-surface p-5">
+            <h2 className="text-xl font-semibold">
+              <Link href="/panel/vinculos" className={linkClass}>
+                Vínculos entre fuentes
+              </Link>
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              Enlazar a mano, con su motivo, las entidades del presupuesto y de SECOP que las
+              reglas automáticas dejan sin enlazar.
+            </p>
+          </li>
+        ) : null}
         {user.role === "admin" ? (
           <>
             <li className="rounded border border-rule bg-surface p-5">

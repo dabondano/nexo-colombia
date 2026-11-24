@@ -17,7 +17,7 @@ import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 
-from sqlalchemy import select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.catalog.models import Institution
@@ -47,15 +47,28 @@ def nit_key(value: str | None) -> str | None:
     return digits or None
 
 
+NIT_METHOD = "nit"
+REVIEW_METHOD = "revision"
+
+
 @dataclass(frozen=True)
 class ContractLinkResult:
     entity_nits: int
     linked_nits: int
     ambiguous_nits: int
     linked_contracts: int
+    reviewed_entities: int = 0
 
 
 def link_contract_institutions(session: Session) -> ContractLinkResult:
+    """Sets each contract's entity: a reviewed mapping first (A-017), else the NIT rule.
+
+    Only rows whose link changes are written, so running it after every sync or
+    after a single reviewed mapping is cheap.
+    """
+    # Imported here: app.catalog.mappings imports this module's nit_key.
+    from app.catalog.mappings import EntityMapping, MappingKind, contract_key
+
     by_nit: dict[str, list[uuid.UUID]] = defaultdict(list)
     for institution_id, nit in session.execute(
         select(Institution.id, Institution.nit).where(Institution.nit.is_not(None))
@@ -63,28 +76,57 @@ def link_contract_institutions(session: Session) -> ContractLinkResult:
         key = nit_key(nit)
         if key:
             by_nit[key].append(institution_id)
-
-    session.execute(update(Contract).values(institution_id=None))
-    nits = [nit for (nit,) in session.execute(select(Contract.entity_nit).distinct()) if nit]
-    linked = ambiguous = contracts = 0
-    for nit in nits:
-        key = nit_key(nit)
-        matches = by_nit.get(key, []) if key else []
-        if len(matches) > 1:
-            ambiguous += 1
-        if len(matches) != 1:
-            continue
-        linked += 1
-        result = session.execute(
-            update(Contract).where(Contract.entity_nit == nit).values(institution_id=matches[0])
+    reviewed = {
+        mapping.source_value: mapping.institution_id
+        for mapping in session.scalars(
+            select(EntityMapping).where(EntityMapping.kind == MappingKind.CONTRACT_ENTITY.value)
         )
-        contracts += result.rowcount  # type: ignore[attr-defined]
+    }
+
+    nits: set[str] = set()
+    linked_nits: set[str] = set()
+    ambiguous_nits: set[str] = set()
+    reviewed_pairs = 0
+    pairs = session.execute(select(Contract.entity_nit, Contract.entity_name).distinct()).all()
+    for nit, name in pairs:
+        key = nit_key(nit)
+        if nit:
+            nits.add(nit)
+        target: uuid.UUID | None = None
+        method: str | None = None
+        mapped = reviewed.get(contract_key(nit, name))
+        if mapped is not None:
+            target, method = mapped, REVIEW_METHOD
+            reviewed_pairs += 1
+        else:
+            matches = by_nit.get(key, []) if key else []
+            if len(matches) == 1 and nit:
+                target, method = matches[0], NIT_METHOD
+                linked_nits.add(nit)
+            elif len(matches) > 1 and nit:
+                ambiguous_nits.add(nit)
+        session.execute(
+            update(Contract)
+            .where(
+                Contract.entity_nit.is_not_distinct_from(nit),
+                Contract.entity_name == name,
+                or_(
+                    Contract.institution_id.is_distinct_from(target),
+                    Contract.institution_link_method.is_distinct_from(method),
+                ),
+            )
+            .values(institution_id=target, institution_link_method=method)
+        )
     session.commit()
+    linked_contracts = session.scalar(
+        select(func.count()).where(Contract.institution_id.is_not(None))
+    )
     return ContractLinkResult(
         entity_nits=len(nits),
-        linked_nits=linked,
-        ambiguous_nits=ambiguous,
-        linked_contracts=contracts,
+        linked_nits=len(linked_nits),
+        ambiguous_nits=len(ambiguous_nits),
+        linked_contracts=linked_contracts or 0,
+        reviewed_entities=reviewed_pairs,
     )
 
 
