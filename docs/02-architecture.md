@@ -106,7 +106,7 @@ For the generic datos.gov.co connector: page with `$limit`/`$offset` ordered by 
 - **Authorization:** role-based, enforced in API dependencies on every route; the frontend only hides what the API already forbids. Implemented roles (M4, staff only, the public site has no accounts): administrator, data steward, legal reviewer. Public user accounts are not planned for the MVP (owner decision of 2026-11-18). See ADR-006.
 - **Input and output:** Pydantic validation on all inputs; parameterized queries only; output encoding by React; strict Content Security Policy; CSRF tokens on state-changing requests.
 - **Files:** uploads are type-checked, size-limited, stored outside the web root, parsed in an isolated worker.
-- **Rate limiting** per IP and per account; **audit log** for sign-ins, role changes, imports, rollbacks, exports. Implemented in M4: per-account lockout and an append-only audit log (`core.audit_event`, protected by a database trigger) of sign-ins, failed sign-ins, sign-outs, password changes, account changes and data synchronizations, without IP addresses. Per-IP limits are pending until a reverse proxy exists (ADR-006).
+- **Rate limiting** per IP and per account; **audit log** for sign-ins, role changes, imports, rollbacks, exports. Implemented in M4: per-account lockout and an append-only audit log (`core.audit_event`, protected by a database trigger) of sign-ins, failed sign-ins, sign-outs, password changes, account changes and data synchronizations, without IP addresses. Per-IP limits are enforced by the Caddy reverse proxy in production (ADR-006, docs/06).
 - **Secrets:** environment-injected, never committed; `.env.example` documents names only.
 - **Backups:** daily database dumps plus object-storage versioning; restore tested in Phase 6.
 - **Privacy:** field allow-lists at ingestion; `restricted` schema for matching identifiers; public views exclude protected data; documented classification of each field as public-interest or protected.
@@ -175,7 +175,7 @@ Structured logs, request IDs, sync-run metrics per source, error tracking, healt
 - **Options considered:** (A) opaque random session tokens stored hashed in PostgreSQL; the web server keeps the token in an HTTP-only, SameSite=Strict cookie and sends it to the API as a bearer token; (B) signed stateless tokens (JWT) in the cookie; (C) an external identity provider.
 - **Analysis:** A can be revoked at once (sign-out, password or role change, deactivation), keeps the API free of cookies and therefore of cross-site request forgery, and needs no new service. B cannot be revoked before expiry without a deny list, which brings back the database lookup. C adds a vendor and a hosting dependency for a handful of accounts.
 - **Decision:** A. Passwords are hashed with Argon2id; five failed sign-ins lock an account for 15 minutes; sessions last at most 12 hours and end after 2 hours idle; every staff route checks the role in the API.
-- **Consequences:** one database read per staff request. Per-IP rate limiting cannot be done well in the API (it sees the web server's address) and must be added at the reverse proxy when hosting is chosen. Single sign-on can be added later beside A.
+- **Consequences:** one database read per staff request. Per-IP rate limiting cannot be done well in the API (it sees the web server's address); it is done by the reverse proxy (Caddy, `deploy/caddy/Caddyfile`). Single sign-on can be added later beside A.
 
 ## 7. API outline (v1)
 

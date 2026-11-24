@@ -20,3 +20,7 @@ dist/
 data/
 *.log
 .DS_Store
+
+# Production settings and backups (deploy/)
+deploy/.env
+deploy/backups/
