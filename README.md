@@ -20,7 +20,12 @@ Status stages used in this project: Diseñado → Implementado → Probado → I
 | `frontend/` | Web application (Next.js, React, TypeScript, Tailwind CSS) |
 | `docs/` | Requirements, architecture, data model, source registry, status |
 | `docker-compose.yml` | Local database and API |
+| `demo/` | One-command local demo with real data |
 | `.github/workflows/ci.yml` | Lint, type checks, tests and build on every pull request |
+
+## Try it locally
+
+To run the whole platform with real data and no setup beyond Docker Desktop, see [demo/README.md](demo/README.md): `docker compose -f demo/compose.yaml up --build`, then open http://localhost:3000.
 
 ## Development
 
