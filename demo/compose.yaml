@@ -1,0 +1,80 @@
+# Local demo: the whole platform on your own computer, with real public data.
+#
+#   docker compose -f demo/compose.yaml up --build
+#
+# Then open http://localhost:3000. The first start downloads the public datasets
+# (a few minutes); the site works meanwhile and fills in as each dataset lands.
+# The passwords below are for this local demo only. Nothing here is published.
+name: nexo-demo
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: nexo
+      POSTGRES_PASSWORD: nexo-demo
+      POSTGRES_DB: nexo
+    volumes:
+      - demo_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexo -d nexo"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Web application and API in one container (the same image Render runs).
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/render/Dockerfile
+    environment:
+      NEXO_ENVIRONMENT: development
+      NEXO_DATABASE_URL: postgresql+psycopg://nexo:nexo-demo@db:5432/nexo
+      NEXO_CORS_ORIGINS: '["http://localhost:3000"]'
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 10s
+
+  # Runs once: registers the sources, loads the data, creates a demo administrator
+  # (its one-time password is printed here the first time).
+  loader:
+    build:
+      context: ..
+      dockerfile: deploy/render/Dockerfile
+    environment:
+      NEXO_ENVIRONMENT: development
+      NEXO_DATABASE_URL: postgresql+psycopg://nexo:nexo-demo@db:5432/nexo
+      NEXO_DEMO_RELOAD: ${NEXO_DEMO_RELOAD:-0}
+    working_dir: /app/api
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        set -e
+        has_data() {
+          python -c "import sys; from sqlalchemy import text; from app.core.db import get_engine; c = get_engine().connect(); sys.exit(0 if c.execute(text('select count(*) from core.legal_instrument')).scalar() else 1)"
+        }
+        if [ "$$NEXO_DEMO_RELOAD" != "1" ] && has_data; then
+          echo "Demo data already loaded. To download it again: NEXO_DEMO_RELOAD=1 docker compose -f demo/compose.yaml up"
+        else
+          echo "Loading public data. This takes a few minutes; the site is already at http://localhost:3000"
+          python -m app.sources.registry
+          python -m app.ingestion.cli all || echo "Some datasets failed to load; see the messages above. The rest is in place."
+        fi
+        python -m app.auth.cli create-admin demo@nexo.local "Demo admin" || true
+        echo "Done. Open http://localhost:3000"
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  demo_db:

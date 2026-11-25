@@ -12,7 +12,7 @@ GitHub Actions ── weekly data sync, daily backup ──▶ Neon
 
 | Piece | Free allowance it relies on | What happens at the limit |
 |---|---|---|
-| Neon (database) | 1 GB storage per project, 100 compute-hours a month, scales to zero after 5 minutes idle. NEXO's full data is about 90 MB. | Usage is capped; no charge. |
+| Neon (database) | 1 GB storage per project (checked in the console on 2026-11-24), scales to zero when idle. NEXO's data is about 340 MB with the 90-day contracts window and the laws; the data-quality page warns at 80 % of `NEXO_DATABASE_SIZE_LIMIT_MB` (default 1024). | Usage is capped; no charge. |
 | Render (web + API) | One free web service; 750 instance hours a month per workspace; sleeps after 15 minutes without visits and takes about a minute to wake. | Suspended until the next month if bandwidth or hours run out. |
 | GitHub Actions | Weekly sync (~5 min) and daily backup (~1 min) use a small part of the private-repository minutes. | Jobs stop until the next month. |
 
@@ -26,7 +26,7 @@ Oracle (docs/06) or the Neon + Cloud Run combination are the fallbacks.
 ## 1. Database on Neon
 
 1. Sign up at neon.com (GitHub or e-mail; no card).
-2. Create a project named `nexo`: PostgreSQL 17 (or 16), region **AWS US East (N. Virginia)** —
+2. Create a project named `nexo`: PostgreSQL **17** (the console offers 18 by default, but the backup job's `pg_dump` 17 cannot read 18), region **AWS US East 1 (N. Virginia)**, Postgres database only —
    the same area as the Render service, so the pages' queries stay fast.
 3. Open **Connect**, turn **off** "Connection pooling", and copy the connection string
    (`postgresql://neondb_owner:…@…neon.tech/neondb?sslmode=require…`). This is the
@@ -38,6 +38,8 @@ Oracle (docs/06) or the Neon + Cloud Run combination are the fallbacks.
    ```sql
    CREATE ROLE nexo_app LOGIN PASSWORD 'the-password';
    ```
+
+   Use letters and digits only, so the password needs no escaping inside the connection string.
 
    Create it **with SQL, not in the console's Roles page**: Neon makes console-created
    roles administrators (neon_superuser, which can write every table), and NEXO
